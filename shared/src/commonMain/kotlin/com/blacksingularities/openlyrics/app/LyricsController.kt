@@ -244,6 +244,7 @@ class LyricsController(val platform: Platform) {
         cache.put(np.key, lyrics)
         cacheCount = cache.count()
         if (settings.saveSidecar && lyrics.synced) writeSidecar(file, np, lyrics, quiet = true)
+        if (settings.saveEmbedded && lyrics.synced) writeEmbedded(file, np, lyrics, quiet = true)
         return lyrics
     }
 
@@ -252,6 +253,19 @@ class LyricsController(val platform: Platform) {
         val ok = runCatching { w(lyrics.toLrc(np.title, np.artist)) }.getOrDefault(false)
         if (!quiet) showToast(if (ok) tr("Zapisano plik .lrc obok utworu") else tr("Nie można zapisać pliku .lrc"))
         return ok
+    }
+
+    private fun writeEmbedded(file: LocatedTrack?, np: NowPlaying, lyrics: Lyrics, quiet: Boolean): Boolean {
+        val w = file?.writeEmbedded ?: return false
+        val ok = runCatching { w(lyrics.toLrc(np.title, np.artist)) }.getOrDefault(false)
+        if (!quiet) showToast(if (ok) tr("Tekst zapisany wewnątrz pliku") else tr("Nie można zapisać tekstu w pliku"))
+        return ok
+    }
+
+    fun saveEmbeddedNow() {
+        val np = track ?: return
+        val l = (lyricsState as? LyricsState.Ready)?.lyrics ?: return
+        scope.launch(Dispatchers.IO) { writeEmbedded(located, np, l, quiet = false) }
     }
 
     fun saveSidecarNow() {

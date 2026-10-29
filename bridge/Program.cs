@@ -74,9 +74,11 @@ public static class Program
             if (since > TimeSpan.Zero && since < TimeSpan.FromHours(6)) pos += since * rate;
         }
         var end = tl.EndTime - tl.StartTime;
+        var app = s.SourceAppUserModelId ?? "";
         Emit(new Dictionary<string, object?>
         {
-            ["app"] = s.SourceAppUserModelId ?? "",
+            ["file"] = Players.CurrentFile(app),
+            ["app"] = app,
             ["title"] = props?.Title ?? "",
             ["artist"] = string.IsNullOrEmpty(props?.Artist) ? props?.AlbumArtist ?? "" : props!.Artist,
             ["album"] = props?.AlbumTitle ?? "",

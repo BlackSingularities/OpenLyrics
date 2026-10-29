@@ -44,7 +44,20 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.blacksingularities.openlyrics.app.LyricsState
+import com.blacksingularities.openlyrics.data.FontChoice
+import com.blacksingularities.openlyrics.data.HighlightMode
 import com.blacksingularities.openlyrics.data.OverlayStyle
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.em
 import com.blacksingularities.openlyrics.data.ScrollMode
 import com.blacksingularities.openlyrics.i18n.tr
 import com.blacksingularities.openlyrics.lyrics.LyricLine
@@ -81,14 +94,14 @@ fun LyricsOverlay(
             .fillMaxSize()
             .then(if (frame) Modifier.border(1.5.dp, Color.White.copy(alpha = 0.55f), shape) else Modifier)
             .graphicsLayer { this.alpha = if (frame) maxOf(alpha, 0.6f) else alpha }
-            .background(Color.Black.copy(alpha = style.backgroundAlpha), shape)
+            .background(Color(style.backgroundColor).copy(alpha = style.backgroundAlpha), shape)
             .clipToBounds(),
     ) {
         Column(Modifier.fillMaxSize()) {
             if (style.showHeader && track != null) {
                 Text(
                     listOf(track.title, track.artist).filter { it.isNotBlank() }.joinToString("  ·  "),
-                    style = lineStyle(style, (style.fontSize * 0.5f).coerceAtLeast(11f), false, Color.White.copy(alpha = 0.75f)),
+                    style = lineStyle(style, (style.fontSize * 0.5f).coerceAtLeast(11f), Color.White.copy(alpha = 0.75f), weight = 600),
                     maxLines = 1,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp),
                     textAlign = style.align.toCompose(),
@@ -131,23 +144,61 @@ private fun Align.toCompose() = when (this) {
     Align.RIGHT -> TextAlign.End
 }
 
-private fun lineStyle(style: OverlayStyle, size: Float, bold: Boolean, color: Color) = TextStyle(
+private fun FontChoice.family(): FontFamily = when (this) {
+    FontChoice.SANS -> FontFamily.SansSerif
+    FontChoice.SERIF -> FontFamily.Serif
+    FontChoice.MONO -> FontFamily.Monospace
+    FontChoice.CURSIVE -> FontFamily.Cursive
+}
+
+/** Styl wiersza: krój, grubość, odstępy i cień z ustawień; [glow] – poświata zamiast cienia. */
+private fun lineStyle(style: OverlayStyle, size: Float, color: Color, glow: Color? = null, weight: Int = style.weight) = TextStyle(
     color = color,
     fontSize = size.sp,
     lineHeight = (size * 1.22f).sp,
-    fontWeight = if (bold) FontWeight.ExtraBold else FontWeight.SemiBold,
-    shadow = if (style.outline > 0f) Shadow(Color.Black.copy(alpha = (0.55f + 0.4f * style.outline).coerceAtMost(1f)), Offset(0f, size * 0.04f), blurRadius = 2f + 10f * style.outline) else null,
+    fontFamily = style.font.family(),
+    fontWeight = FontWeight(weight.coerceIn(100, 900)),
+    fontStyle = if (style.italic) FontStyle.Italic else FontStyle.Normal,
+    letterSpacing = style.letterSpacing.em,
+    shadow = when {
+        glow != null -> Shadow(glow, Offset.Zero, blurRadius = style.shadowBlur + size * 0.6f)
+        style.shadowAlpha > 0f && (style.shadowBlur > 0f || style.shadowOffsetX != 0f || style.shadowOffsetY != 0f) ->
+            Shadow(Color(style.shadowColor).copy(alpha = style.shadowAlpha), Offset(style.shadowOffsetX * 2f, style.shadowOffsetY * 2f), blurRadius = style.shadowBlur * 2f)
+        else -> null
+    },
 )
 
 @Composable
 private fun Message(text: String, style: OverlayStyle) {
     Box(Modifier.fillMaxSize().padding(horizontal = 18.dp), contentAlignment = Alignment.Center) {
-        Text(
-            text,
-            style = lineStyle(style, style.fontSize * 0.7f, style.bold, Color(style.inactiveColor).copy(alpha = 0.85f)),
-            textAlign = TextAlign.Center,
-            maxLines = 3,
-        )
+        StyledText(text, lineStyle(style, style.fontSize * 0.7f, Color(style.inactiveColor).copy(alpha = 0.85f)), style)
+    }
+}
+
+/** Tekst z obrysem pod spodem (osobna warstwa kreski liter). */
+@Composable
+private fun StyledText(
+    text: String,
+    textStyle: TextStyle,
+    style: OverlayStyle,
+    modifier: Modifier = Modifier,
+    onLayout: (TextLayoutResult) -> Unit = {},
+) {
+    val shown = if (style.uppercase) text.uppercase() else text
+    val align = style.align.toCompose()
+    Box(modifier) {
+        if (style.outlineWidth > 0f) {
+            val px = with(LocalDensity.current) { (style.outlineWidth * 2).dp.toPx() }
+            Text(
+                shown,
+                style = textStyle.copy(
+                    color = Color(style.outlineColor).copy(alpha = textStyle.color.alpha),
+                    drawStyle = Stroke(width = px, join = StrokeJoin.Round),
+                ),
+                textAlign = align,
+            )
+        }
+        Text(shown, style = textStyle, textAlign = align, onTextLayout = onLayout)
     }
 }
 
@@ -292,6 +343,37 @@ private fun Lines(lyrics: Lyrics, track: NowPlaying, style: OverlayStyle, offset
     }
 }
 
+/**
+ * Zaśpiewana część wiersza w każdej linii ułożonego tekstu (także zawiniętego na kilka linii):
+ * [lewa, prawa, góra, dół] w pikselach.
+ */
+private fun sungRects(layout: TextLayoutResult, progress: Float): List<FloatArray> {
+    val len = layout.layoutInput.text.length
+    if (len == 0) return emptyList()
+    val chars = progress * len
+    val out = ArrayList<FloatArray>()
+    for (li in 0 until layout.lineCount) {
+        val start = layout.getLineStart(li)
+        val end = layout.getLineEnd(li, visibleEnd = true)
+        val left = layout.getLineLeft(li)
+        val right = layout.getLineRight(li)
+        val top = layout.getLineTop(li)
+        val bottom = layout.getLineBottom(li)
+        if (chars >= end) {
+            out += floatArrayOf(left, right, top, bottom)
+        } else {
+            if (chars > start) {
+                val i = chars.toInt().coerceIn(start, end)
+                val x0 = layout.getHorizontalPosition(i, true)
+                val x1 = layout.getHorizontalPosition((i + 1).coerceAtMost(end), true)
+                out += floatArrayOf(left, x0 + (x1 - x0) * (chars - i), top, bottom)
+            }
+            break
+        }
+    }
+    return out
+}
+
 @Composable
 private fun LineText(
     index: Int,
@@ -311,10 +393,13 @@ private fun LineText(
     val targetAlpha = when {
         !synced -> 0.9f
         isActive -> 1f
+        style.visibleLines <= 1 -> 0f
         else -> (style.inactiveAlpha * (1f - ((distance - 1) / (half + 1f)))).coerceIn(0f, 1f)
     }
     val lineAlpha by animateFloatAsState(targetAlpha, tween(380), label = "lineAlpha")
-    val scale by animateFloatAsState(if (isActive) style.activeScale else 1f, spring(dampingRatio = 0.8f, stiffness = 300f), label = "lineScale")
+    // Rozmiar zmienia się skalą, a nie układem – przejście jest płynne i nie przesuwa wierszy.
+    val small = if (synced) style.inactiveSize.coerceIn(0.4f, 1f) else 1f
+    val scale by animateFloatAsState(if (isActive) style.activeScale else small, spring(dampingRatio = 0.8f, stiffness = 300f), label = "lineScale")
     val activeColor = Color(style.activeColor)
     val inactiveColor = Color(style.inactiveColor)
     val text = line.text.ifBlank { "♪" }
@@ -323,35 +408,54 @@ private fun LineText(
         Align.CENTER -> TransformOrigin(0.5f, 0.5f)
         Align.RIGHT -> TransformOrigin(1f, 0.5f)
     }
-    val karaoke = isActive && style.karaoke && line.text.isNotBlank()
+    val tracking = isActive && line.text.isNotBlank() && style.highlight != HighlightMode.LINES
+    val fill = tracking && (style.highlight == HighlightMode.FILL || style.highlight == HighlightMode.FILL_BAR)
+    val bar = tracking && (style.highlight == HighlightMode.BAR || style.highlight == HighlightMode.FILL_BAR)
+    val glow = if (isActive && style.glow > 0f) activeColor.copy(alpha = style.glow) else null
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val end = lineEnd(lines, index, durationMs)
+    val fillColor = Color(style.fillColor)
+    val barColor = Color(style.barColor)
+    val barPx = with(LocalDensity.current) { style.barHeight.dp.toPx() }
     Box(
         Modifier
-            .padding(vertical = (baseSize * 0.22f).dp)
+            .padding(vertical = (baseSize * style.lineSpacing / 2f).dp, horizontal = 4.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
                 alpha = lineAlpha
                 transformOrigin = origin
+            }
+            .drawWithContent {
+                drawContent()
+                val l = layout
+                if (bar && l != null) {
+                    // Ścieżka pod całym wierszem, na niej kreska zaśpiewanej części z kropką na czele.
+                    for (li in 0 until l.lineCount) {
+                        val y = l.getLineBottom(li) + barPx * 0.2f
+                        drawRoundRect(barColor.copy(alpha = 0.2f), Offset(l.getLineLeft(li), y), Size(l.getLineRight(li) - l.getLineLeft(li), barPx), CornerRadius(barPx / 2))
+                    }
+                    val rects = sungRects(l, fillProgress(line, end, pos()))
+                    rects.forEachIndexed { k, r ->
+                        val y = r[3] + barPx * 0.2f
+                        drawRoundRect(barColor, Offset(r[0], y), Size((r[1] - r[0]).coerceAtLeast(0f), barPx), CornerRadius(barPx / 2))
+                        if (k == rects.lastIndex) drawCircle(barColor, barPx * 1.1f, Offset(r[1], y + barPx / 2))
+                    }
+                }
             },
     ) {
-        if (karaoke) {
-            // Najpierw cały wiersz przygaszony, na nim wypełnienie kolorem aktywnym do bieżącego miejsca.
-            Text(text, style = lineStyle(style, baseSize, style.bold, inactiveColor.copy(alpha = 0.55f)), textAlign = style.align.toCompose())
-            val end = lineEnd(lines, index, durationMs)
+        StyledText(text, lineStyle(style, baseSize, if (isActive) activeColor else inactiveColor, glow), style, onLayout = { layout = it })
+        if (fill) {
             Text(
-                text,
-                style = lineStyle(style, baseSize, style.bold, activeColor).copy(shadow = null),
+                if (style.uppercase) text.uppercase() else text,
+                style = lineStyle(style, baseSize, fillColor).copy(shadow = null),
                 textAlign = style.align.toCompose(),
                 modifier = Modifier.drawWithContent {
-                    val f = fillProgress(line, end, pos())
-                    clipRect(right = size.width * f) { this@drawWithContent.drawContent() }
+                    val l = layout ?: return@drawWithContent
+                    for (r in sungRects(l, fillProgress(line, end, pos()))) {
+                        clipRect(left = r[0] - 2f, top = r[2], right = r[1], bottom = r[3]) { this@drawWithContent.drawContent() }
+                    }
                 },
-            )
-        } else {
-            Text(
-                text,
-                style = lineStyle(style, baseSize, style.bold && (isActive || !synced), if (isActive) activeColor else inactiveColor),
-                textAlign = style.align.toCompose(),
             )
         }
     }

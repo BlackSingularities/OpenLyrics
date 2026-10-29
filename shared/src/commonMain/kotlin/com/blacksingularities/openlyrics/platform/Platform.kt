@@ -18,6 +18,8 @@ class LocatedTrack(
     val readSidecar: () -> String? = { null },
     /** Zapis pliku .lrc obok utworu; null – niedostępny. */
     val writeSidecar: ((String) -> Boolean)? = null,
+    /** Zapis tekstu wewnątrz pliku (MP3, FLAC); null – niedostępny. */
+    val writeEmbedded: ((String) -> Boolean)? = null,
 )
 
 /** Krok konfiguracji (uprawnienie albo ustawienie systemu) pokazywany na ekranie głównym. */

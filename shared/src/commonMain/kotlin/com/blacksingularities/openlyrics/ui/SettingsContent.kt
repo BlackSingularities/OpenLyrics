@@ -75,36 +75,8 @@ private fun pct(v: Float) = "${(v * 100).roundToInt()}%"
 @Composable
 fun ColumnScope.SettingsContent(c: LyricsController) {
     val s = c.settings
-    val st = s.style
-    fun style(t: (OverlayStyle) -> OverlayStyle) = c.updateSettings { it.copy(style = t(it.style)) }
 
-    SectionHeader(Icons.Rounded.Subtitles, tr("Wygląd nakładki"))
-    Group {
-        SliderRow(Icons.Rounded.FormatSize, tr("Rozmiar tekstu"), st.fontSize.toFloat(), 14f..72f, { "${it.roundToInt()} pt" }) { v -> style { it.copy(fontSize = v.roundToInt()) } }
-        SliderRow(Icons.Rounded.ViewDay, tr("Widoczne wiersze"), st.visibleLines.toFloat(), 1f..15f, { it.roundToInt().toString() }, steps = 13) { v -> style { it.copy(visibleLines = v.roundToInt()) } }
-        SliderRow(Icons.Rounded.VerticalAlignCenter, tr("Wysokość aktywnego wiersza"), st.anchor, 0.15f..0.85f, { pct(it) }) { v -> style { it.copy(anchor = v) } }
-        ChoiceRow(Icons.AutoMirrored.Rounded.FormatAlignLeft, tr("Wyrównanie"), TextAlign.entries, st.align, {
-            when (it) { TextAlign.LEFT -> tr("Do lewej"); TextAlign.CENTER -> tr("Do środka"); TextAlign.RIGHT -> tr("Do prawej") }
-        }) { v -> style { it.copy(align = v) } }
-    }
-    Group {
-        ColorRow(tr("Kolor aktywnego wiersza"), st.activeColor) { v -> style { it.copy(activeColor = v) } }
-        ColorRow(tr("Kolor pozostałych wierszy"), st.inactiveColor) { v -> style { it.copy(inactiveColor = v) } }
-        SliderRow(Icons.Rounded.Opacity, tr("Krycie pozostałych wierszy"), st.inactiveAlpha, 0.1f..1f, { pct(it) }) { v -> style { it.copy(inactiveAlpha = v) } }
-        SliderRow(Icons.Rounded.ZoomIn, tr("Powiększenie aktywnego wiersza"), st.activeScale, 1f..1.4f, { pct(it) }) { v -> style { it.copy(activeScale = v) } }
-        SliderRow(Icons.Rounded.Contrast, tr("Cień liter"), st.outline, 0f..1f, { pct(it) }) { v -> style { it.copy(outline = v) } }
-        SliderRow(Icons.Rounded.Gradient, tr("Tło nakładki"), st.backgroundAlpha, 0f..0.85f, { if (it < 0.01f) tr("przezroczyste") else pct(it) }) { v -> style { it.copy(backgroundAlpha = v) } }
-        ToggleRow(Icons.Rounded.FormatBold, tr("Pogrubienie"), null, st.bold) { v -> style { it.copy(bold = v) } }
-    }
-    Group {
-        ChoiceRow(Icons.Rounded.Animation, tr("Przewijanie"), ScrollMode.entries, st.scroll, {
-            when (it) { ScrollMode.SMOOTH -> tr("Płynne"); ScrollMode.STEP -> tr("Wiersz po wierszu") }
-        }) { v -> style { it.copy(scroll = v) } }
-        ToggleRow(Icons.Rounded.Lyrics, tr("Karaoke"), tr("Aktywny wiersz wypełnia się kolorem w rytm śpiewu (dokładnie, gdy tekst ma czasy słów)"), st.karaoke) { v -> style { it.copy(karaoke = v) } }
-        ToggleRow(Icons.Rounded.Height, tr("Wygaszanie krawędzi"), tr("Wiersze łagodnie znikają przy górnej i dolnej krawędzi"), st.fadeEdges) { v -> style { it.copy(fadeEdges = v) } }
-        ToggleRow(Icons.Rounded.Title, tr("Tytuł nad tekstem"), tr("Wykonawca i tytuł w górnej części nakładki"), st.showHeader) { v -> style { it.copy(showHeader = v) } }
-        ActionRow(Icons.Rounded.Tune, tr("Przywróć domyślny wygląd"), null) { style { OverlayStyle() } }
-    }
+    AppearanceSettings(c)
 
     SectionHeader(Icons.Rounded.VisibilityOff, tr("Kiedy pokazywać"))
     Group {
@@ -118,6 +90,7 @@ fun ColumnScope.SettingsContent(c: LyricsController) {
         ToggleRow(Icons.Rounded.Cloud, tr("Szukaj w sieci"), tr("Gdy plik nie ma tekstu – LRCLIB, otwarta baza tekstów z czasami"), s.searchOnline) { v -> c.updateSettings { it.copy(searchOnline = v) } }
         ToggleRow(Icons.Rounded.Timer, tr("Wolę tekst z czasami"), tr("Gdy w pliku jest tekst bez czasów, poszukaj wersji z czasami"), s.preferSynced, enabled = s.searchOnline) { v -> c.updateSettings { it.copy(preferSynced = v) } }
         ToggleRow(Icons.Rounded.Save, tr("Zapisuj pliki .lrc"), tr("Tekst znaleziony w sieci zapisz obok utworu – następnym razem także inne odtwarzacze go zobaczą"), s.saveSidecar) { v -> c.updateSettings { it.copy(saveSidecar = v) } }
+        ToggleRow(Icons.Rounded.Save, tr("Zapisuj tekst w plikach muzycznych"), tr("Tekst z czasami znaleziony w sieci trafia do środka pliku MP3 (ID3) albo FLAC (komentarz LYRICS) – pozostałe tagi i okładka zostają bez zmian"), s.saveEmbedded) { v -> c.updateSettings { it.copy(saveEmbedded = v) } }
         SliderRow(Icons.Rounded.Timer, tr("Przesunięcie wszystkich tekstów"), s.globalOffsetMs / 1000f, -3f..3f, { LyricsController.formatOffset((it * 1000).toLong()) + " s" }, steps = 23) { v ->
             c.updateSettings { it.copy(globalOffsetMs = (v * 4).roundToInt() * 250L) }
         }
@@ -135,20 +108,6 @@ fun ColumnScope.SettingsContent(c: LyricsController) {
         UpdateRow(c)
     }
     About(c)
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ColorRow(title: String, value: Long, onPick: (Long) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RowIcon(Icons.Rounded.Palette)
-            Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 12.dp))
-        }
-        FlowRow(Modifier.padding(start = 40.dp, top = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            for (col in Palette.LyricColors) ColorDot(Color(col), col == value) { onPick(col) }
-        }
-    }
 }
 
 @Composable

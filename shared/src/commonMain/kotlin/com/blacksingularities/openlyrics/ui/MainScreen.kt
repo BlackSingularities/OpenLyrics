@@ -359,6 +359,10 @@ private fun ActionsCard(c: LyricsController) {
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             PillButton(tr("Szukaj ponownie"), Icons.Rounded.Refresh, primary = false, enabled = c.track != null) { c.reload() }
             val ready = c.lyricsState is LyricsState.Ready
+            val embeddedNow = (c.lyricsState as? LyricsState.Ready)?.lyrics?.source == LyricsSource.EMBEDDED
+            if (ready && !embeddedNow && c.located?.writeEmbedded != null) {
+                PillButton(tr("Zapisz w pliku"), Icons.Rounded.Save, primary = false) { c.saveEmbeddedNow() }
+            }
             if (ready && c.located?.writeSidecar != null) {
                 PillButton(tr("Zapisz .lrc"), Icons.Rounded.Save, primary = false) { c.saveSidecarNow() }
             }

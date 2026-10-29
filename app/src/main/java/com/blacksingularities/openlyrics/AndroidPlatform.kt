@@ -20,6 +20,7 @@ import com.blacksingularities.openlyrics.platform.LocatedTrack
 import com.blacksingularities.openlyrics.platform.Platform
 import com.blacksingularities.openlyrics.platform.SetupItem
 import com.blacksingularities.openlyrics.tags.ChannelSource
+import com.blacksingularities.openlyrics.tags.TagWriter
 import com.blacksingularities.openlyrics.update.UpdateManager
 import java.io.File
 import java.io.FileInputStream
@@ -92,8 +93,13 @@ class AndroidPlatform(private val context: Context) : Platform {
             f.absolutePath,
             { ChannelSource.open(f) },
             readSidecar = { runCatching { lrc.takeIf { it.canRead() }?.readText() }.getOrNull() },
+            writeEmbedded = embedWriter(f),
         )
     }
+
+    /** Zapis w pliku tylko tam, gdzie system pozwala pisać wprost (np. pamięć aplikacji, karta bez ograniczeń). */
+    private fun embedWriter(f: File?): ((String) -> Boolean)? =
+        f?.takeIf { TagWriter.supports(it) && it.canWrite() }?.let { file -> { text: String -> TagWriter.writeLyrics(file, text) } }
 
     private fun fromUri(uri: Uri, name: String, path: String?): LocatedTrack? {
         // Sprawdzenie, czy plik da się otworzyć.
@@ -111,6 +117,7 @@ class AndroidPlatform(private val context: Context) : Platform {
                 }
             },
             readSidecar = { runCatching { lrc?.takeIf { it.canRead() }?.readText() }.getOrNull() },
+            writeEmbedded = embedWriter(path?.let(::File)),
         )
     }
 

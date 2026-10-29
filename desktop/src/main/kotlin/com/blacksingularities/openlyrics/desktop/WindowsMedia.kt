@@ -87,6 +87,7 @@ class WindowsMedia(private val bridge: File?) : MediaSource {
             capturedAt = o.l("at").takeIf { it > 0 } ?: System.currentTimeMillis(),
             playing = (o["playing"] as? JsonPrimitive)?.booleanOrNull == true,
             rate = ((o["rate"] as? JsonPrimitive)?.doubleOrNull ?: 1.0).toFloat().takeIf { it > 0f } ?: 1f,
+            fileHint = o.s("file").ifBlank { null },
         ).tidy()
         _now.value = np
     }
