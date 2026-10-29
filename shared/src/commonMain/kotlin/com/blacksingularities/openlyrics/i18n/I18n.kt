@@ -1,0 +1,210 @@
+package com.blacksingularities.openlyrics.i18n
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.serialization.Serializable
+
+/** Język interfejsu wybrany w ustawieniach. */
+@Serializable
+enum class AppLanguage { SYSTEM, PL, EN }
+
+/**
+ * Lokalizacja: teksty w kodzie są po polsku (klucze), a [En] zawiera ich angielskie odpowiedniki.
+ * Szablony {0}, {1}… są zastępowane argumentami. Odczyt języka to stan Compose – zmiana języka
+ * od razu odświeża cały interfejs.
+ */
+object I18n {
+    var english by mutableStateOf(false)
+        private set
+
+    fun apply(language: AppLanguage, systemLanguage: String) {
+        english = when (language) {
+            AppLanguage.PL -> false
+            AppLanguage.EN -> true
+            AppLanguage.SYSTEM -> systemLanguage != "pl"
+        }
+    }
+}
+
+fun tr(pl: String, vararg args: Any?): String {
+    val text = if (I18n.english) En[pl] ?: pl else pl
+    if (args.isEmpty()) return text
+    var out = text
+    args.forEachIndexed { i, a -> out = out.replace("{$i}", a?.toString() ?: "") }
+    return out
+}
+
+internal val En: Map<String, String> = hashMapOf(
+    // ekran główny
+    "Teraz" to "Now",
+    "Ustawienia" to "Settings",
+    "Konfiguracja" to "Setup",
+    "Teraz odtwarzane" to "Now playing",
+    "Nic nie gra" to "Nothing is playing",
+    "Brak dostępu do odtwarzacza" to "No access to the player",
+    "Włącz muzykę w dowolnym odtwarzaczu – tekst pojawi się sam." to "Play music in any player – the lyrics will appear on their own.",
+    "Wykonaj kroki konfiguracji powyżej." to "Complete the setup steps above.",
+    "Odtwarzacz" to "Player",
+    "Poprzedni" to "Previous",
+    "Następny" to "Next",
+    "Odtwarzaj / pauza" to "Play / pause",
+    "Oczekiwanie na utwór" to "Waiting for a track",
+    "Nie znaleziono tekstu – wyszukaj ręcznie poniżej" to "No lyrics found – search manually below",
+    "utwór instrumentalny" to "instrumental",
+    "z czasami" to "synced",
+    "bez czasów" to "unsynced",
+    "instrumentalny" to "instrumental",
+    "Osadzony w pliku" to "Embedded in the file",
+    "Plik .lrc obok utworu" to ".lrc file next to the track",
+    "Zapisany wcześniej" to "Saved earlier",
+    "Znaleziony w LRCLIB" to "Found on LRCLIB",
+    "Wybrany ręcznie" to "Chosen manually",
+    "{0} wierszy" to "{0} lines",
+    "Podgląd" to "Preview",
+    "Nakładka" to "Overlay",
+    "Zablokuj nakładkę" to "Lock overlay",
+    "Nakładka zablokowana – kliknięcia przechodzą do okien pod nią" to "Overlay locked – clicks pass through to the windows below",
+    "Nakładkę można przesuwać i zmieniać jej rozmiar" to "The overlay can be moved and resized",
+    "Nakładka wyłączona" to "Overlay off",
+    "Nakładka zablokowana" to "Overlay locked",
+    "Nakładka – przeciągnij, aby ustawić" to "Overlay – drag to position it",
+    "Odblokowaną nakładkę przesuwasz myszą lub palcem" to "Move the unlocked overlay with the mouse or your finger",
+    "Przesunięcie czasu" to "Timing offset",
+    "Dla tego utworu · zapamiętywane" to "For this track · remembered",
+    "Tekst później" to "Lyrics later",
+    "Tekst wcześniej" to "Lyrics earlier",
+    "Przesunięcie: {0} s" to "Offset: {0} s",
+    "Szukaj ponownie" to "Search again",
+    "Zapisz .lrc" to "Save .lrc",
+    "Zapomnij wybór" to "Forget choice",
+    "Wyszukaj tekst" to "Search lyrics",
+    "Wykonawca i tytuł" to "Artist and title",
+    "Szukaj" to "Search",
+    "Szukanie…" to "Searching…",
+    "Brak wyników" to "No results",
+    "Zamknij" to "Close",
+    "Wyniki z otwartej bazy LRCLIB. Wybrany tekst zostanie zapamiętany dla odtwarzanego utworu." to "Results from the open LRCLIB database. The chosen lyrics are remembered for the current track.",
+    "Wybór tekstu jest możliwy, gdy coś gra" to "Lyrics can be chosen while something is playing",
+    "Tekst zapamiętany dla tego utworu" to "Lyrics remembered for this track",
+    "Usunięto {0} zapisanych tekstów" to "Removed {0} saved lyrics",
+    "Zapisano plik .lrc obok utworu" to "Saved the .lrc file next to the track",
+    "Nie można zapisać pliku .lrc" to "Cannot save the .lrc file",
+    "Pomiń" to "Skip",
+    // wyszukiwanie
+    "Szukanie pliku utworu…" to "Looking for the track file…",
+    "Odczyt tekstu z pliku…" to "Reading lyrics from the file…",
+    "Szukanie w LRCLIB…" to "Searching LRCLIB…",
+    "Brak połączenia z LRCLIB: {0}" to "Cannot reach LRCLIB: {0}",
+    // nakładka
+    "Utwór instrumentalny" to "Instrumental",
+    "Brak tekstu dla tego utworu" to "No lyrics for this track",
+    "OpenLyrics · uruchom odtwarzanie muzyki" to "OpenLyrics · start playing some music",
+    "Przeciągnij, aby przesunąć · róg – rozmiar" to "Drag to move · corner to resize",
+    // ustawienia
+    "Wygląd nakładki" to "Overlay appearance",
+    "Rozmiar tekstu" to "Text size",
+    "Widoczne wiersze" to "Visible lines",
+    "Wysokość aktywnego wiersza" to "Active line position",
+    "Wyrównanie" to "Alignment",
+    "Do lewej" to "Left",
+    "Do środka" to "Center",
+    "Do prawej" to "Right",
+    "Kolor aktywnego wiersza" to "Active line color",
+    "Kolor pozostałych wierszy" to "Other lines color",
+    "Krycie pozostałych wierszy" to "Other lines opacity",
+    "Powiększenie aktywnego wiersza" to "Active line zoom",
+    "Cień liter" to "Text shadow",
+    "Tło nakładki" to "Overlay background",
+    "przezroczyste" to "transparent",
+    "Pogrubienie" to "Bold",
+    "Przewijanie" to "Scrolling",
+    "Płynne" to "Smooth",
+    "Wiersz po wierszu" to "Line by line",
+    "Karaoke" to "Karaoke",
+    "Aktywny wiersz wypełnia się kolorem w rytm śpiewu (dokładnie, gdy tekst ma czasy słów)" to "The active line fills with color as it is sung (word-exact when the lyrics have word timings)",
+    "Wygaszanie krawędzi" to "Fade edges",
+    "Wiersze łagodnie znikają przy górnej i dolnej krawędzi" to "Lines fade out gently at the top and bottom",
+    "Tytuł nad tekstem" to "Title above lyrics",
+    "Wykonawca i tytuł w górnej części nakładki" to "Artist and title at the top of the overlay",
+    "Przywróć domyślny wygląd" to "Restore default look",
+    "Kiedy pokazywać" to "When to show",
+    "Nakładka włączona" to "Overlay on",
+    "Tekst nad innymi oknami" to "Lyrics above other windows",
+    "Ukrywaj po zatrzymaniu" to "Hide when paused",
+    "Nakładka znika, gdy muzyka jest wstrzymana" to "The overlay disappears while the music is paused",
+    "Ukrywaj bez tekstu" to "Hide without lyrics",
+    "Nic nie pokazuj, gdy utwór nie ma tekstu" to "Show nothing when the track has no lyrics",
+    "Teksty" to "Lyrics",
+    "Szukaj w sieci" to "Search online",
+    "Gdy plik nie ma tekstu – LRCLIB, otwarta baza tekstów z czasami" to "When the file has no lyrics – LRCLIB, an open database of synced lyrics",
+    "Wolę tekst z czasami" to "Prefer synced lyrics",
+    "Gdy w pliku jest tekst bez czasów, poszukaj wersji z czasami" to "When the file has unsynced lyrics, look for a synced version",
+    "Zapisuj pliki .lrc" to "Save .lrc files",
+    "Tekst znaleziony w sieci zapisz obok utworu – następnym razem także inne odtwarzacze go zobaczą" to "Save lyrics found online next to the track – other players will see them too",
+    "Przesunięcie wszystkich tekstów" to "Offset for all lyrics",
+    "Wyczyść zapisane teksty" to "Clear saved lyrics",
+    "{0} utworów w pamięci podręcznej" to "{0} tracks in the cache",
+    "Ogólne" to "General",
+    "Język aplikacji" to "App language",
+    "Systemowy" to "System",
+    "Aktualizacje" to "Updates",
+    "Sprawdzaj przy uruchomieniu" to "Check on startup",
+    "Aktualizacje pobierane są bezpośrednio z redzikowski.com" to "Updates are downloaded directly from redzikowski.com",
+    "Pomysł i wykonanie: Adam Rędzikowski · redzikowski.com" to "Idea and development: Adam Rędzikowski · redzikowski.com",
+    "Postaw kawę" to "Buy me a coffee",
+    "OpenLyrics – tekst odtwarzanej piosenki nad oknami, dla Windows i Androida" to "OpenLyrics – lyrics of the playing song above your windows, for Windows and Android",
+    "OpenLyrics – tekst odtwarzanej piosenki nad aplikacjami, dla Androida i Windows" to "OpenLyrics – lyrics of the playing song above your apps, for Android and Windows",
+    "Licencja MIT · teksty z plików i z otwartej bazy LRCLIB" to "MIT License · lyrics from your files and the open LRCLIB database",
+    // aktualizacje
+    "Wersja {0}" to "Version {0}",
+    "Sprawdź" to "Check",
+    "Sprawdzanie…" to "Checking…",
+    "Wersja {0} jest najnowsza" to "Version {0} is the latest",
+    "Dostępna wersja {0}" to "Version {0} available",
+    "Aktualizuj" to "Update",
+    "Pobieranie {0} · {1}%" to "Downloading {0} · {1}%",
+    "Wersja {0} gotowa" to "Version {0} ready",
+    "Zainstaluj" to "Install",
+    "Instalowanie {0}…" to "Installing {0}…",
+    "Ponów" to "Retry",
+    "Brak wydań" to "No releases",
+    "Serwer odpowiedział kodem {0}" to "The server responded with code {0}",
+    "Wydanie nie zawiera pliku {0}" to "The release contains no {0} file",
+    "Nieoczekiwany adres pliku aktualizacji" to "Unexpected update file address",
+    "Pobieranie nie powiodło się ({0})" to "Download failed ({0})",
+    "Pobieranie przerwane" to "Download cancelled",
+    "Nie można zapisać pliku aktualizacji" to "Cannot save the update file",
+    "OpenLyrics zaktualizowany do {0}" to "OpenLyrics updated to {0}",
+    "Dotknij, aby otworzyć aplikację" to "Tap to open the app",
+    "kod {0}" to "code {0}",
+    "Aktualizacja nieudana: {0}" to "Update failed: {0}",
+    "Zezwól na instalowanie aplikacji z OpenLyrics i spróbuj ponownie" to "Allow OpenLyrics to install apps and try again",
+    // Android
+    "Dostęp do odtwarzaczy" to "Access to players",
+    "Android udostępnia informację o odtwarzanym utworze tylko aplikacjom z dostępem do powiadomień. OpenLyrics nie czyta ani nie zapisuje Twoich powiadomień." to "Android shares what is playing only with apps that have notification access. OpenLyrics does not read or store your notifications.",
+    "Zezwól" to "Allow",
+    "Wyświetlanie nad aplikacjami" to "Display over other apps",
+    "Potrzebne, aby tekst był widoczny nad odtwarzaczem i innymi aplikacjami." to "Needed to show the lyrics above the player and other apps.",
+    "Pliki muzyczne" to "Music files",
+    "Pozwala odczytać tekst osadzony w plikach MP3 i FLAC na telefonie. Bez tego teksty są wyszukiwane tylko w sieci." to "Lets the app read lyrics embedded in MP3 and FLAC files on your phone. Without it, lyrics are only searched online.",
+    // Windows
+    "Biblioteka muzyki" to "Music library",
+    "Windows nie podaje ścieżki odtwarzanego pliku, więc OpenLyrics szuka go w tych folderach – po tagach, a gdy ich brak, po nazwie pliku." to "Windows does not expose the path of the playing file, so OpenLyrics looks for it in these folders – by tags, or by file name when there are none.",
+    "Usuń folder" to "Remove folder",
+    "Dodaj folder" to "Add folder",
+    "Skanowanie… {0} plików" to "Scanning… {0} files",
+    "Skanuj ponownie" to "Rescan",
+    "{0} utworów w indeksie" to "{0} tracks indexed",
+    "Uruchamianie" to "Startup",
+    "Uruchamiaj z Windows" to "Start with Windows",
+    "OpenLyrics startuje w zasobniku po zalogowaniu" to "OpenLyrics starts in the tray after you sign in",
+    "Autostart działa tylko w zainstalowanej aplikacji" to "Autostart works only in the installed app",
+    "Uruchamiaj zminimalizowany" to "Start minimized",
+    "Przy starcie tylko nakładka i ikona w zasobniku" to "On startup only the overlay and the tray icon",
+    "Wybierz folder z muzyką" to "Choose a music folder",
+    "Pokaż OpenLyrics" to "Show OpenLyrics",
+    "Tekst wcześniej (+0,25 s)" to "Lyrics earlier (+0.25 s)",
+    "Tekst później (−0,25 s)" to "Lyrics later (−0.25 s)",
+    "Zakończ" to "Quit",
+)

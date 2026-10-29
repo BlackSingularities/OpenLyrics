@@ -1,0 +1,140 @@
+name: Build & Release (Android + Windows)
+
+# Wydanie wyłącznie po wypchnięciu tagu wersji (np. v1.2.3). Ręczne uruchomienie (workflow_dispatch)
+# buduje i testuje obie platformy bez publikowania wydania.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.ver.outputs.name }}
+      code: ${{ steps.ver.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wersja
+        id: ver
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then NAME="${GITHUB_REF_NAME#v}"; else NAME="$(cat VERSION)-dev.${{ github.run_number }}"; fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$(( ${{ github.run_number }} + 100 ))" >> "$GITHUB_OUTPUT"
+
+  android:
+    needs: version
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Klucz podpisu
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "SIGNING_KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+
+      - name: Testy jednostkowe
+        run: gradle :shared:testDebugUnitTest --stacktrace
+
+      - name: Budowanie APK
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+        run: gradle :app:assembleRelease -PversionCode=${{ needs.version.outputs.code }} -PversionName=${{ needs.version.outputs.name }} --stacktrace
+
+      - name: Przygotowanie pliku
+        run: cp app/build/outputs/apk/release/app-release.apk "OpenLyrics-${{ needs.version.outputs.name }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenLyrics-${{ needs.version.outputs.name }}-android
+          path: OpenLyrics-${{ needs.version.outputs.name }}.apk
+
+  windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      # Mostek do sesji multimediów Windows – trafia do zasobów aplikacji.
+      - name: Mostek multimediów
+        run: dotnet publish bridge/MediaBridge.csproj -c Release -o desktop/resources/windows
+
+      - name: Testy i aplikacja
+        run: gradle :shared:desktopTest :desktop:createDistributable -PversionName=${{ needs.version.outputs.name }} --stacktrace
+
+      - name: Instalator
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          $name = "${{ needs.version.outputs.name }}"
+          $num = ($name -split '[-+]')[0]
+          & $iscc "/DAppVersion=$name" "/DNumVersion=$num" desktop/installer/OpenLyrics.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item "desktop/build/installer/OpenLyrics-${{ needs.version.outputs.name }}-setup.exe" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenLyrics-${{ needs.version.outputs.name }}-windows
+          path: OpenLyrics-${{ needs.version.outputs.name }}-setup.exe
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: [version, android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publikacja wydania
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ needs.version.outputs.name }}
+        run: |
+          NOTES=$(awk -v version="$NAME" '$0 == "## " version { found=1; next } found && /^## / { exit } found { print }' CHANGELOG.md)
+          if [ -z "$NOTES" ]; then NOTES=$(git log -5 --pretty='- %s' "$GITHUB_SHA" 2>/dev/null || echo "- Poprawki i ulepszenia"); fi
+          FOOTER=$(printf -- '---\n**Pobieranie:** https://redzikowski.com/portfolio/openlyrics\n\n**Windows:** uruchom **OpenLyrics-%s-setup.exe** (Windows 10/11, bez uprawnień administratora).\n\n**Android:** zainstaluj **OpenLyrics-%s.apk** (Android 10+).\n\nZainstalowana aplikacja sama pobiera kolejne wersje z redzikowski.com.' "$NAME" "$NAME")
+          gh release create "v$NAME" "dist/OpenLyrics-$NAME.apk" "dist/OpenLyrics-$NAME-setup.exe" \
+            --target "$GITHUB_SHA" \
+            --title "OpenLyrics $NAME" \
+            --notes "$(printf '%s\n\n%s' "$NOTES" "$FOOTER")" \
+            --latest
