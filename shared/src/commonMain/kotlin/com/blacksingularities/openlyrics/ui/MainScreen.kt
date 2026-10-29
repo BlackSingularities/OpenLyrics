@@ -28,7 +28,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.FormatAlignLeft
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Lock
@@ -340,7 +342,7 @@ private fun ActionsCard(c: LyricsController) {
                 Text(tr("Dla tego utworu · zapamiętywane"), fontSize = 12.sp, color = Palette.TextDim)
             }
             val enabled = c.track != null
-            RoundButton(androidx.compose.material.icons.Icons.Rounded.Remove, tr("Tekst później"), size = 36.dp, enabled = enabled) { c.nudgeOffset(-250) }
+            RoundButton(Icons.Rounded.Remove, tr("Tekst później"), size = 36.dp, enabled = enabled) { c.nudgeOffset(-250) }
             Text(
                 LyricsController.formatOffset(c.offsetFor(c.track)) + " s",
                 fontSize = 14.sp,
@@ -348,7 +350,7 @@ private fun ActionsCard(c: LyricsController) {
                 modifier = Modifier.width(76.dp).clickable(enabled = enabled) { c.resetTrackOffset() },
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
-            RoundButton(androidx.compose.material.icons.Icons.Rounded.Add, tr("Tekst wcześniej"), size = 36.dp, enabled = enabled) { c.nudgeOffset(250) }
+            RoundButton(Icons.Rounded.Add, tr("Tekst wcześniej"), size = 36.dp, enabled = enabled) { c.nudgeOffset(250) }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = 10.dp).height(1.dp).background(Palette.Line))
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

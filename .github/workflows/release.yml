@@ -95,6 +95,7 @@ jobs:
         run: dotnet publish bridge/MediaBridge.csproj -c Release -o desktop/resources/windows
 
       - name: Testy i aplikacja
+        shell: bash
         run: gradle :shared:desktopTest :desktop:createDistributable -PversionName=${{ needs.version.outputs.name }} --stacktrace
 
       - name: Instalator
