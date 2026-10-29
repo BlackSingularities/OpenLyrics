@@ -187,14 +187,22 @@ class LyricsController(val platform: Platform) {
         }
         setLyrics(LyricsState.Searching(tr("Szukanie pliku utworu…")))
         resolveJob = scope.launch(Dispatchers.IO) {
-            try {
-                val result = findLyrics(np, forceOnline)
-                if (!isActive) return@launch
-                setLyrics(if (result != null && !result.isEmpty) LyricsState.Ready(result) else LyricsState.NotFound)
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Throwable) {
-                setLyrics(LyricsState.Failed(e.message ?: e.toString()))
+            // Przy chwilowej awarii sieci lub LRCLIB ponawiamy w tle, dopóki gra ten sam utwór.
+            var attempt = 0
+            while (isActive) {
+                try {
+                    val result = findLyrics(np, forceOnline)
+                    if (!isActive) return@launch
+                    setLyrics(if (result != null && !result.isEmpty) LyricsState.Ready(result) else LyricsState.NotFound)
+                    return@launch
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    attempt++
+                    val wait = (10_000L * attempt).coerceAtMost(60_000)
+                    setLyrics(LyricsState.Failed(tr("{0} – ponowna próba za {1} s", e.message ?: e.toString(), wait / 1000)))
+                    delay(wait)
+                }
             }
         }
     }
@@ -228,10 +236,13 @@ class LyricsController(val platform: Platform) {
 
         setLyrics(LyricsState.Searching(tr("Szukanie w LRCLIB…")))
         val online = runCatching {
-            LrcLib.get(np)?.takeIf { it.hasSynced || it.instrumental || !it.plain.isNullOrBlank() }
-                ?: LrcLib.best(np, LrcLib.search(np.artist, np.title))
-                ?: LrcLib.best(np, LrcLib.search("${np.artist} ${np.title}"))
+            retrying {
+                LrcLib.get(np)?.takeIf { it.hasSynced || it.instrumental || !it.plain.isNullOrBlank() }
+                    ?: LrcLib.best(np, LrcLib.search(np.artist, np.title))
+                    ?: LrcLib.best(np, LrcLib.search("${np.artist} ${np.title}"))
+            }
         }.getOrElse { e ->
+            if (e is kotlinx.coroutines.CancellationException) throw e
             if (embedded != null || cached != null) null else throw IllegalStateException(tr("Brak połączenia z LRCLIB: {0}", e.message ?: ""))
         }
         if (online == null) {
@@ -246,6 +257,22 @@ class LyricsController(val platform: Platform) {
         if (settings.saveSidecar && lyrics.synced) writeSidecar(file, np, lyrics, quiet = true)
         if (settings.saveEmbedded && lyrics.synced) writeEmbedded(file, np, lyrics, quiet = true)
         return lyrics
+    }
+
+    /** Kilka szybkich prób – LRCLIB czasem odpowiada 502/503 przez kilka sekund. */
+    private suspend fun <T> retrying(block: () -> T): T {
+        var last: Throwable? = null
+        for (wait in longArrayOf(0, 1_500, 4_000)) {
+            if (wait > 0) delay(wait)
+            try {
+                return block()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                last = e
+            }
+        }
+        throw last!!
     }
 
     private fun writeSidecar(file: LocatedTrack?, np: NowPlaying, lyrics: Lyrics, quiet: Boolean): Boolean {

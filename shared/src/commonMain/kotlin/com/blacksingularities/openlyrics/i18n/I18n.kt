@@ -96,6 +96,7 @@ internal val En: Map<String, String> = hashMapOf(
     "Odczyt tekstu z pliku…" to "Reading lyrics from the file…",
     "Szukanie w LRCLIB…" to "Searching LRCLIB…",
     "Brak połączenia z LRCLIB: {0}" to "Cannot reach LRCLIB: {0}",
+    "{0} – ponowna próba za {1} s" to "{0} – retrying in {1} s",
     // nakładka
     "Utwór instrumentalny" to "Instrumental",
     "Brak tekstu dla tego utworu" to "No lyrics for this track",
