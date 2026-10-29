@@ -35,6 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -160,19 +164,56 @@ fun SliderRow(
             Text(title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f).padding(horizontal = 12.dp))
             Text(display(value), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
-        Slider(
-            value = value.coerceIn(range.start, range.endInclusive),
-            onValueChange = onChange,
-            valueRange = range,
-            steps = steps,
-            modifier = Modifier.fillMaxWidth().height(32.dp).padding(start = 40.dp),
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = Color.White,
-                inactiveTrackColor = Color.White.copy(alpha = 0.15f),
-                activeTickColor = Color.Transparent,
-                inactiveTickColor = Color.Transparent,
-            ),
+        FlatSlider(value, range, steps, onChange, Modifier.padding(start = 44.dp, top = 4.dp))
+    }
+}
+
+/**
+ * Płaski suwak: cienka ścieżka, biała część do wartości i okrągły uchwyt. Dotknięcie albo
+ * przeciągnięcie w dowolnym miejscu ustawia wartość; [steps] – liczba pośrednich kroków.
+ */
+@Composable
+fun FlatSlider(
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val span = (range.endInclusive - range.start).coerceAtLeast(1e-6f)
+    val fraction = ((value - range.start) / span).coerceIn(0f, 1f)
+    val change by androidx.compose.runtime.rememberUpdatedState(onChange)
+    var dragging by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val thumb by animateFloatAsState(if (dragging) 22f else 18f, tween(120), label = "thumb")
+    fun pick(x: Float, width: Int) {
+        var f = (x / width.coerceAtLeast(1)).coerceIn(0f, 1f)
+        if (steps > 0) f = kotlin.math.round(f * (steps + 1)) / (steps + 1)
+        change(range.start + f * span)
+    }
+    androidx.compose.foundation.layout.BoxWithConstraints(
+        modifier
+            .fillMaxWidth()
+            .height(28.dp)
+            .pointerInput(range, steps) {
+                detectTapGestures { pick(it.x, size.width) }
+            }
+            .pointerInput(range, steps) {
+                detectHorizontalDragGestures(
+                    onDragStart = { dragging = true; pick(it.x, size.width) },
+                    onDragEnd = { dragging = false },
+                    onDragCancel = { dragging = false },
+                ) { ch, _ -> ch.consume(); pick(ch.position.x, size.width) }
+            },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(Modifier.fillMaxWidth().height(4.dp).clip(BlockShape).background(Color.White.copy(alpha = 0.15f)))
+        Box(Modifier.fillMaxWidth(fraction).height(4.dp).clip(BlockShape).background(Color.White))
+        Box(
+            Modifier
+                .offset(x = (maxWidth - thumb.dp) * fraction)
+                .size(thumb.dp)
+                .clip(CircleShape)
+                .background(Color.White),
         )
     }
 }

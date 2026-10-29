@@ -1,3 +1,8 @@
+## 1.0.1
+
+- Dopracowany interfejs: wszystkie opisy w ustawieniach są białe i czytelne na ciemnym tle.
+- Nowe suwaki w stylu aplikacji: cienka ścieżka i okrągły uchwyt, wartość ustawiana dotknięciem albo przeciągnięciem w dowolnym miejscu.
+
 ## 1.0.0
 
 - Pierwsze wydanie OpenLyrics na Windows i Androida.

@@ -88,6 +88,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun MainScreen(c: LyricsController, header: (@Composable () -> Unit)? = null) {
     OpenLyricsTheme {
+      // Domyślny kolor tekstu i ikon: biel (bez tego teksty poza Surface są czarne).
+      androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides Color.White) {
         var settingsTab by rememberSaveable { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().background(Palette.Panel).windowInsetsPadding(WindowInsets.safeDrawing)) {
             Column(Modifier.fillMaxSize()) {
@@ -127,6 +129,7 @@ fun MainScreen(c: LyricsController, header: (@Composable () -> Unit)? = null) {
                 )
             }
         }
+      }
     }
 }
 
