@@ -1,3 +1,14 @@
+## 1.1.0
+
+- Nowe tryby śledzenia śpiewu: same wiersze, wypełnianie kolorem, przesuwana kreska śpiewania albo wypełnianie i kreska razem – dokładnie co do słowa przy rozszerzonym LRC, także w wierszach zawiniętych na kilka linii.
+- Pełne ustawienia czcionki: krój, rozmiar aktywnego i pozostałych wierszy, grubość, odstęp liter i wierszy, kursywa, wielkie litery.
+- Selektor kolorów (odcień, nasycenie, jasność) dla aktywnego i pozostałych wierszy, wypełnienia, kreski, obrysu, cienia i tła – z zapamiętywaniem własnych kolorów.
+- Obrys liter oraz cień z regulacją rozmycia, krycia, przesunięcia i koloru; poświata aktywnego wiersza.
+- Gotowe style: Klasyczny, Karaoke, Neon, Napisy filmowe, Minimalny, Pasek, Szeryfowy.
+- Podgląd na żywo w ustawieniach – także gdy nic nie gra.
+- Zapis tekstu wewnątrz plików MP3 (ID3) i FLAC (komentarz LYRICS) – automatycznie albo przyciskiem „Zapisz w pliku”; pozostałe tagi, okładka i dźwięk zostają nietknięte.
+- Windows: połączenia z odtwarzaczami podającymi ścieżkę grającego pliku – AIMP i Winamp bez wtyczek, foobar2000 (beefweb) i VLC (interfejs WWW).
+
 ## 1.0.1
 
 - Dopracowany interfejs: wszystkie opisy w ustawieniach są białe i czytelne na ciemnym tle.
