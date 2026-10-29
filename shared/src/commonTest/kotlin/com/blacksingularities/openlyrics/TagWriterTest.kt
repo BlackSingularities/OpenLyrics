@@ -19,7 +19,7 @@ class TagWriterTest {
         val title = byteArrayOf(3) + "Próbna".toByteArray()
         val frame = "TIT2".toByteArray() + syncsafe(title.size) + byteArrayOf(0, 0) + title
         val audio = ByteArray(500) { (it % 251).toByte() }
-        val f = File.createTempFile("ol", ".mp3")
+        val f = File.createTempFile("openlyrics", ".mp3")
         f.writeBytes("ID3".toByteArray() + byteArrayOf(4, 0, 0) + syncsafe(frame.size) + frame + audio)
         assertTrue(TagWriter.writeLyrics(f, lrc))
         assertTrue(TagWriter.writeLyrics(f, lrc)) // drugi zapis zastępuje, nie dubluje
@@ -32,7 +32,7 @@ class TagWriterTest {
 
     @Test
     fun writesMp3WithoutTag() {
-        val f = File.createTempFile("ol", ".mp3")
+        val f = File.createTempFile("openlyrics", ".mp3")
         f.writeBytes(ByteArray(300) { 0x55 })
         assertTrue(TagWriter.writeLyrics(f, lrc))
         assertEquals(2, TagReader.read(f)?.lyrics?.lines?.size)
@@ -43,7 +43,7 @@ class TagWriterTest {
     fun writesFlac() {
         val streamInfo = ByteArray(34).also { it[10] = 0x0A; it[11] = 0xC4.toByte(); it[12] = 0x40 }
         val audio = ByteArray(400) { (it % 7).toByte() }
-        val f = File.createTempFile("ol", ".flac")
+        val f = File.createTempFile("openlyrics", ".flac")
         f.writeBytes("fLaC".toByteArray() + byteArrayOf(0x80.toByte(), 0, 0, 34) + streamInfo + audio)
         assertTrue(TagWriter.writeLyrics(f, lrc))
         assertTrue(TagWriter.writeLyrics(f, lrc))
