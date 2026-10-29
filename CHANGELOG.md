@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Po chwilowej awarii LRCLIB (np. kod 503) aplikacja sama ponawia wyszukiwanie tekstu – zamiast zostawiać komunikat o błędzie do zmiany utworu.
+
 ## 1.1.0
 
 - Nowe tryby śledzenia śpiewu: same wiersze, wypełnianie kolorem, przesuwana kreska śpiewania albo wypełnianie i kreska razem – dokładnie co do słowa przy rozszerzonym LRC, także w wierszach zawiniętych na kilka linii.
