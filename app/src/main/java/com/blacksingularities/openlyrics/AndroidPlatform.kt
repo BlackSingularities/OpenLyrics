@@ -10,9 +10,11 @@ import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.runtime.Composable
 import com.blacksingularities.openlyrics.i18n.tr
 import com.blacksingularities.openlyrics.media.AndroidMedia
 import com.blacksingularities.openlyrics.media.NowPlaying
@@ -21,6 +23,10 @@ import com.blacksingularities.openlyrics.platform.Platform
 import com.blacksingularities.openlyrics.platform.SetupItem
 import com.blacksingularities.openlyrics.tags.ChannelSource
 import com.blacksingularities.openlyrics.tags.TagWriter
+import com.blacksingularities.openlyrics.data.OverlayBounds
+import com.blacksingularities.openlyrics.ui.components.ActionRow
+import com.blacksingularities.openlyrics.ui.components.Group
+import com.blacksingularities.openlyrics.ui.components.SectionHeader
 import com.blacksingularities.openlyrics.update.UpdateManager
 import java.io.File
 import java.io.FileInputStream
@@ -157,6 +163,9 @@ class AndroidPlatform(private val context: Context) : Platform {
         return fromUri(ContentUris.withAppendedId(collection, hit.id), hit.name, hit.path)
     }
 
+    /** Rozmiar nakładki ustawiony palcem wraca do automatycznego jednym przyciskiem. */
+    override val settingsExtras: @Composable () -> Unit = { OverlaySizeSettings() }
+
     override val updateAssetSuffix = ".apk"
 
     override suspend fun installUpdate(file: File) {
@@ -171,4 +180,23 @@ class AndroidPlatform(private val context: Context) : Platform {
 
     override val aboutTitle = "OpenLyrics – tekst odtwarzanej piosenki nad aplikacjami, dla Androida i Windows"
     override val aboutLicense = "Licencja MIT · teksty z plików i z otwartej bazy LRCLIB"
+}
+
+@Composable
+private fun OverlaySizeSettings() {
+    val c = OpenLyricsApp.instance.controller
+    val b = c.settings.phoneBounds
+    val custom = b.width > 0 || b.height > 0
+    SectionHeader(Icons.Rounded.AspectRatio, tr("Rozmiar nakładki"))
+    Group {
+        ActionRow(
+            Icons.Rounded.AspectRatio,
+            tr("Dopasuj automatycznie"),
+            if (custom) tr("Teraz {0}×{1} px – ustawione ręcznie", b.width.takeIf { it > 0 } ?: 0, b.height)
+            else tr("Pełna szerokość ekranu, wysokość z liczby widocznych wierszy. Rozmiar zmienisz, ciągnąc róg nakładki."),
+            trailing = if (custom) tr("Resetuj") else null,
+        ) {
+            c.updateSettings { it.copy(phoneBounds = OverlayBounds(x = -1, y = it.phoneBounds.y, width = 0, height = 0)) }
+        }
+    }
 }

@@ -121,6 +121,11 @@ internal val En: Map<String, String> = hashMapOf(
     "Brak tekstu dla tego utworu" to "No lyrics for this track",
     "OpenLyrics · uruchom odtwarzanie muzyki" to "OpenLyrics · start playing some music",
     "Przeciągnij, aby przesunąć · róg – rozmiar" to "Drag to move · corner to resize",
+    "Rozmiar nakładki" to "Overlay size",
+    "Dopasuj automatycznie" to "Fit automatically",
+    "Resetuj" to "Reset",
+    "Teraz {0}×{1} px – ustawione ręcznie" to "Now {0}×{1} px – set by hand",
+    "Pełna szerokość ekranu, wysokość z liczby widocznych wierszy. Rozmiar zmienisz, ciągnąc róg nakładki." to "Full screen width, height from the number of visible lines. Drag the overlay’s corner to resize it.",
     // ustawienia
     "Wygląd nakładki" to "Overlay appearance",
     "Rozmiar tekstu" to "Text size",

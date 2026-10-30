@@ -133,6 +133,12 @@ data class AppSettings(
     val overlayLocked: Boolean = false,
     val style: OverlayStyle = OverlayStyle(),
     val bounds: OverlayBounds = OverlayBounds(),
+    /**
+     * Położenie i rozmiar nakładki na telefonie – osobno od okna na komputerze.
+     * Szerokość i wysokość 0 oznaczają dopasowanie automatyczne (pełna szerokość ekranu,
+     * wysokość z liczby widocznych wierszy).
+     */
+    val phoneBounds: OverlayBounds = OverlayBounds(x = -1, y = -1, width = 0, height = 0),
     val hideWhenPaused: Boolean = false,
     val hideWhenNoLyrics: Boolean = true,
     val searchOnline: Boolean = true,
