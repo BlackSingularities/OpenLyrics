@@ -1,3 +1,7 @@
+## 1.2.1
+
+- Android: nakładka z tekstem nie wywraca już aplikacji przy starcie odtwarzania (StackOverflowError w rysowaniu nakładki).
+
 ## 1.2.0
 
 - Windows: instalacja w Program Files z uprawnieniami administratora; aktualizacja z aplikacji prosi o zgodę (UAC), instaluje się w tym samym folderze i nie zostawia drugiej kopii. Stara kopia z folderu użytkownika jest usuwana automatycznie.

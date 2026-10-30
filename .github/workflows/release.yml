@@ -139,7 +139,7 @@ jobs:
         run: |
           NOTES=$(awk -v version="$NAME" '$0 == "## " version { found=1; next } found && /^## / { exit } found { print }' CHANGELOG.md)
           if [ -z "$NOTES" ]; then NOTES=$(git log -5 --pretty='- %s' "$GITHUB_SHA" 2>/dev/null || echo "- Poprawki i ulepszenia"); fi
-          FOOTER=$(printf -- '---\n**Pobieranie:** https://redzikowski.com/portfolio/openlyrics\n\n**Windows:** uruchom **OpenLyrics-%s-setup.exe** (Windows 10/11, bez uprawnień administratora).\n\n**Android:** zainstaluj **OpenLyrics-%s.apk** (Android 10+).\n\nZainstalowana aplikacja sama pobiera kolejne wersje z redzikowski.com.' "$NAME" "$NAME")
+          FOOTER=$(printf -- '---\n**Pobieranie:** https://redzikowski.com/portfolio/openlyrics\n\n**Windows:** uruchom **OpenLyrics-%s-setup.exe** (Windows 10/11; instalator poprosi o zgodę administratora).\n\n**Android:** zainstaluj **OpenLyrics-%s.apk** (Android 10+).\n\nZainstalowana aplikacja sama pobiera kolejne wersje z redzikowski.com.' "$NAME" "$NAME")
           gh release create "v$NAME" "dist/OpenLyrics-$NAME.apk" "dist/OpenLyrics-$NAME-setup.exe" \
             --target "$GITHUB_SHA" \
             --title "OpenLyrics $NAME" \
