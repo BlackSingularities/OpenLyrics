@@ -153,7 +153,8 @@ private class OverlayWindow(private val context: Context) : LifecycleOwner, Save
             recomposer = r
             compositionContext = r
             CoroutineScope(AndroidUiDispatcher.CurrentThread + failed).launch { r.runRecomposeAndApplyChanges() }
-            setContent { Content() }
+            // Nazwa inna niż ComposeView.Content() – wewnątrz apply tamta wywoływałaby samą siebie.
+            setContent { OverlayContent() }
         }
         val v = SafeFrame(context) { e -> fail(e, "nakładka – rysowanie") }.apply {
             setViewTreeLifecycleOwner(this@OverlayWindow)
@@ -187,7 +188,7 @@ private class OverlayWindow(private val context: Context) : LifecycleOwner, Save
     }
 
     @Composable
-    private fun Content() {
+    private fun OverlayContent() {
         val c = OpenLyricsApp.instance.controller
         val s = c.settings
         val track = c.track
