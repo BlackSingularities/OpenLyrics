@@ -62,6 +62,7 @@ fun main(args: Array<String>) {
     runCatching { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()) }
     System.setProperty("skiko.renderApi", System.getProperty("skiko.renderApi") ?: "DIRECT3D")
 
+    com.blacksingularities.openlyrics.ui.SystemFonts.current = DesktopFonts
     val platform = DesktopPlatform()
     val controller = LyricsController(platform)
     platform.controller = controller

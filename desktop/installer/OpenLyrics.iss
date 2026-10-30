@@ -1,6 +1,6 @@
 ﻿; Instalator OpenLyrics dla Windows (Inno Setup 6).
-; Instalacja dla bieżącego użytkownika – bez uprawnień administratora, więc aktualizacja
-; pobrana z redzikowski.com instaluje się po cichu i uruchamia aplikację ponownie.
+; Instalacja do Program Files z uprawnieniami administratora (UAC). Aktualizacja z aplikacji
+; uruchamia ten sam instalator po cichu – trafia do folderu poprzedniej instalacji.
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
@@ -20,11 +20,13 @@ AppPublisher=Adam Rędzikowski
 AppPublisherURL=https://redzikowski.com/portfolio/openlyrics
 AppSupportURL=https://redzikowski.com
 AppUpdatesURL=https://redzikowski.com/portfolio/openlyrics
-DefaultDirName={localappdata}\Programs\OpenLyrics
+DefaultDirName={autopf}\OpenLyrics
 DefaultGroupName=OpenLyrics
 DisableProgramGroupPage=yes
 DisableDirPage=auto
-PrivilegesRequired=lowest
+PrivilegesRequired=admin
+UsePreviousAppDir=yes
+SetupLogging=yes
 OutputDir=..\build\installer
 OutputBaseFilename=OpenLyrics-{#AppVersion}-setup
 SetupIconFile=..\icons\OpenLyrics.ico
@@ -62,15 +64,32 @@ Name: "{autodesktop}\OpenLyrics"; Filename: "{app}\OpenLyrics.exe"; Tasks: deskt
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "OpenLyrics"; Flags: uninsdeletevalue dontcreatekey
 
 [Run]
-Filename: "{app}\OpenLyrics.exe"; Description: "{cm:LaunchProgram,OpenLyrics}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\OpenLyrics.exe"; Description: "{cm:LaunchProgram,OpenLyrics}"; Flags: nowait postinstall skipifsilent runasoriginaluser
 ; Aktualizacja z aplikacji (tryb cichy) – uruchom nową wersję od razu.
-Filename: "{app}\OpenLyrics.exe"; Flags: nowait; Check: WizardSilent
+Filename: "{app}\OpenLyrics.exe"; Flags: nowait runasoriginaluser; Check: WizardSilent
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/C taskkill /IM OpenLyricsMedia.exe /F"; Flags: runhidden; RunOnceId: "KillBridge"
 Filename: "{cmd}"; Parameters: "/C taskkill /IM OpenLyrics.exe /F"; Flags: runhidden; RunOnceId: "KillApp"
 
 [Code]
+const
+  OldKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{B2F4C1E6-7A3D-4E59-9C1B-5D8E2F6A4B73}_is1';
+
+// Wersje do 1.1.1 instalowały się dla bieżącego użytkownika (wpis w HKCU) – usuwamy taką
+// kopię, żeby po przejściu do Program Files nie zostały dwie aplikacje.
+procedure RemoveOldPerUserCopy();
+var
+  Uninst: String;
+  Code: Integer;
+begin
+  if RegQueryStringValue(HKCU, OldKey, 'UninstallString', Uninst) then
+  begin
+    Exec(RemoveQuotes(Uninst), '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, Code);
+    RegDeleteKeyIncludingSubkeys(HKCU, OldKey);
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Code: Integer;
@@ -81,5 +100,6 @@ begin
     Exec(ExpandConstant('{cmd}'), '/C taskkill /IM OpenLyricsMedia.exe /F', '', SW_HIDE, ewWaitUntilTerminated, Code);
     Exec(ExpandConstant('{cmd}'), '/C taskkill /IM OpenLyrics.exe /F', '', SW_HIDE, ewWaitUntilTerminated, Code);
     Sleep(500);
+    RemoveOldPerUserCopy();
   end;
 end;

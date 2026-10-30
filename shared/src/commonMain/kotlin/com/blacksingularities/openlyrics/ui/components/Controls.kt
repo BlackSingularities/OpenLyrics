@@ -222,7 +222,7 @@ fun FlatSlider(
 /** Wybór jednej z kilku wartości – rząd pigułek, aktywna biała. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun <T> ChoiceRow(icon: ImageVector, title: String, options: List<T>, selected: T, label: (T) -> String, onPick: (T) -> Unit) {
+fun <T> ChoiceRow(icon: ImageVector, title: String, options: List<T>, selected: T?, label: (T) -> String, onPick: (T) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             RowIcon(icon)

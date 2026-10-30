@@ -16,7 +16,7 @@ data class LyricLine(
 
 /** Skąd pochodzi tekst – pokazywane w interfejsie. */
 @Serializable
-enum class LyricsSource { EMBEDDED, SIDECAR, CACHE, LRCLIB, MANUAL }
+enum class LyricsSource { EMBEDDED, SIDECAR, CACHE, LRCLIB, MANUAL, NETEASE, LYRICS_OVH }
 
 @Serializable
 data class Lyrics(

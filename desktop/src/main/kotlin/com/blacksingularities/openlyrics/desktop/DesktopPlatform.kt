@@ -100,13 +100,19 @@ class DesktopPlatform : Platform {
     override val updateAssetSuffix = "-setup.exe"
 
     /**
-     * Instalator Inno Setup w trybie cichym: zamyka bieżącą wersję, instaluje nową
-     * i uruchamia ją ponownie (sekcja [Run] z warunkiem WizardSilent).
+     * Instalator Inno Setup w trybie cichym. Sam prosi o uprawnienia administratora (instalacja
+     * w Program Files), instaluje do folderu poprzedniej instalacji, zamyka tę wersję i uruchamia
+     * nową jako zwykły użytkownik. Czekamy na niego: gdy się uda, instalator nas zamknie; gdy
+     * okno UAC zostanie odrzucone albo instalacja się nie powiedzie – aplikacja zostaje i pokazuje błąd.
+     * Log instalacji trafia obok pobranego pliku.
      */
     override suspend fun installUpdate(file: File) {
-        ProcessBuilder(file.absolutePath, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS", "/SP-")
+        val log = File(file.parentFile, "install.log")
+        val code = ProcessBuilder(file.absolutePath, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/LOG=${log.absolutePath}")
             .directory(file.parentFile)
             .start()
+            .waitFor()
+        if (code != 0) error(tr("Aktualizacja nie została zainstalowana – wymaga zgody administratora (kod {0})", code))
         media.close()
         exitProcess(0)
     }

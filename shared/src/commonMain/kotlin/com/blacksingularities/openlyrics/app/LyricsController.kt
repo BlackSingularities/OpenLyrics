@@ -8,6 +8,8 @@ import com.blacksingularities.openlyrics.data.SettingsStore
 import com.blacksingularities.openlyrics.i18n.I18n
 import com.blacksingularities.openlyrics.i18n.tr
 import com.blacksingularities.openlyrics.lyrics.LrcLib
+import com.blacksingularities.openlyrics.lyrics.LyricsOvh
+import com.blacksingularities.openlyrics.lyrics.NetEase
 import com.blacksingularities.openlyrics.lyrics.Lyrics
 import com.blacksingularities.openlyrics.lyrics.LyricsCache
 import com.blacksingularities.openlyrics.lyrics.LyricsCandidate
@@ -28,6 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -234,17 +237,7 @@ class LyricsController(val platform: Platform) {
         if (!settings.searchOnline) return embedded ?: cached
         if (!forceOnline && cache.recentlyMissing(np.key)) return embedded ?: cached
 
-        setLyrics(LyricsState.Searching(tr("Szukanie w LRCLIB…")))
-        val online = runCatching {
-            retrying {
-                LrcLib.get(np)?.takeIf { it.hasSynced || it.instrumental || !it.plain.isNullOrBlank() }
-                    ?: LrcLib.best(np, LrcLib.search(np.artist, np.title))
-                    ?: LrcLib.best(np, LrcLib.search("${np.artist} ${np.title}"))
-            }
-        }.getOrElse { e ->
-            if (e is kotlinx.coroutines.CancellationException) throw e
-            if (embedded != null || cached != null) null else throw IllegalStateException(tr("Brak połączenia z LRCLIB: {0}", e.message ?: ""))
-        }
+        val online = searchOnline(np, embedded != null || cached != null)
         if (online == null) {
             if (embedded == null) cache.markMissing(np.key)
             return embedded ?: cached
@@ -257,6 +250,55 @@ class LyricsController(val platform: Platform) {
         if (settings.saveSidecar && lyrics.synced) writeSidecar(file, np, lyrics, quiet = true)
         if (settings.saveEmbedded && lyrics.synced) writeEmbedded(file, np, lyrics, quiet = true)
         return lyrics
+    }
+
+    /**
+     * Szukanie w sieci: najpierw LRCLIB, a gdy nie ma tam tekstu z czasami – NetEase,
+     * na końcu lyrics.ovh (tylko tekst bez czasów). Błąd jednego źródła nie blokuje kolejnych;
+     * wyjątek tylko wtedy, gdy żadne nie odpowiedziało, a nie ma nic z pliku ani z pamięci.
+     */
+    private suspend fun searchOnline(np: NowPlaying, haveFallback: Boolean): LyricsCandidate? {
+        val errors = mutableListOf<String>()
+        fun failed(name: String, e: Throwable) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            errors += "$name: ${e.message ?: e}"
+        }
+
+        setLyrics(LyricsState.Searching(tr("Szukanie w LRCLIB…")))
+        var best: LyricsCandidate? = try {
+            retrying {
+                LrcLib.get(np)?.takeIf { it.hasSynced || it.instrumental || !it.plain.isNullOrBlank() }
+                    ?: LrcLib.best(np, LrcLib.search(np.artist, np.title))
+                    ?: LrcLib.best(np, LrcLib.search("${np.artist} ${np.title}"))
+            }
+        } catch (e: Throwable) {
+            failed("LRCLIB", e)
+            null
+        }
+        if (best?.hasSynced == true || best?.instrumental == true) return best
+        if (!settings.extraSources) return best ?: allFailed(errors, 1, haveFallback)
+
+        setLyrics(LyricsState.Searching(tr("Szukanie w NetEase…")))
+        try {
+            val c = retrying { NetEase.find(np) }
+            if (c != null && (best == null || c.hasSynced || c.instrumental)) best = c
+        } catch (e: Throwable) {
+            failed("NetEase", e)
+        }
+        best?.let { return it }
+
+        setLyrics(LyricsState.Searching(tr("Szukanie w lyrics.ovh…")))
+        try {
+            best = LyricsOvh.find(np)
+        } catch (e: Throwable) {
+            failed("lyrics.ovh", e)
+        }
+        return best ?: allFailed(errors, 3, haveFallback)
+    }
+
+    private fun allFailed(errors: List<String>, sources: Int, haveFallback: Boolean): LyricsCandidate? {
+        if (errors.size < sources || haveFallback) return null
+        throw IllegalStateException(tr("Brak połączenia z bazami tekstów: {0}", errors.joinToString("; ")))
     }
 
     /** Kilka szybkich prób – LRCLIB czasem odpowiada 502/503 przez kilka sekund. */
@@ -304,8 +346,13 @@ class LyricsController(val platform: Platform) {
     fun searchManually(query: String) {
         search = SearchState.Searching
         scope.launch(Dispatchers.IO) {
-            search = runCatching { SearchState.Results(LrcLib.search(query).sortedByDescending { it.hasSynced }) }
-                .getOrElse { SearchState.Failed(it.message ?: it.toString()) }
+            // Wyniki z LRCLIB i NetEase razem; błąd jednej bazy nie ukrywa wyników drugiej.
+            val lrclib = async { runCatching { LrcLib.search(query) } }
+            val netease = async { if (settings.extraSources) runCatching { NetEase.search(query) } else Result.success(emptyList()) }
+            val a = lrclib.await()
+            val all = a.getOrDefault(emptyList()) + netease.await().getOrDefault(emptyList())
+            search = if (all.isEmpty() && a.isFailure) SearchState.Failed(a.exceptionOrNull()?.message ?: "")
+            else SearchState.Results(all.sortedByDescending { it.hasSynced })
         }
     }
 

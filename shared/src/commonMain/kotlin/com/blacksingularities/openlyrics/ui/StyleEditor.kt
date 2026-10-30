@@ -220,12 +220,14 @@ fun ColumnScope.AppearanceSettings(c: LyricsController) {
 
     SectionHeader(Icons.Rounded.TextFields, tr("Czcionka"))
     Group {
-        ChoiceRow(Icons.Rounded.TextFormat, tr("Krój"), FontChoice.entries, st.font, {
+        // Wybór kroju wbudowanego wyłącza czcionkę systemową.
+        ChoiceRow(Icons.Rounded.TextFormat, tr("Krój"), FontChoice.entries, if (st.customFont.isBlank()) st.font else null, {
             when (it) { FontChoice.SANS -> tr("Bezszeryfowy"); FontChoice.SERIF -> tr("Szeryfowy"); FontChoice.MONO -> tr("Stała szerokość"); FontChoice.CURSIVE -> tr("Odręczny") }
-        }) { v -> style { it.copy(font = v) } }
+        }) { v -> style { it.copy(font = v, customFont = "") } }
+        SystemFonts.current?.let { fonts -> SystemFontRow(fonts, st.customFont) { v -> style { it.copy(customFont = v) } } }
         SliderRow(Icons.Rounded.FormatSize, tr("Rozmiar aktywnego wiersza"), st.fontSize.toFloat(), 14f..96f, { "${it.roundToInt()} pt" }) { v -> style { it.copy(fontSize = v.roundToInt()) } }
         SliderRow(Icons.Rounded.FormatSize, tr("Rozmiar pozostałych wierszy"), st.inactiveSize, 0.4f..1f, { pct(it) }) { v -> style { it.copy(inactiveSize = v) } }
-        SliderRow(Icons.Rounded.LineWeight, tr("Grubość"), st.weight.toFloat(), 300f..900f, { weightName(it.roundToInt()) }, steps = 5) { v -> style { it.copy(weight = (v / 100).roundToInt() * 100) } }
+        SliderRow(Icons.Rounded.LineWeight, tr("Grubość"), st.weight.toFloat(), 100f..900f, { weightName(it.roundToInt()) }, steps = 7) { v -> style { it.copy(weight = (v / 100).roundToInt() * 100) } }
         SliderRow(Icons.Rounded.SpaceBar, tr("Odstęp liter"), st.letterSpacing, -0.05f..0.3f, { "${(it * 100).roundToInt()}" }) { v -> style { it.copy(letterSpacing = v) } }
         SliderRow(Icons.Rounded.FormatLineSpacing, tr("Odstęp wierszy"), st.lineSpacing, 0f..1.5f, { pct(it) }) { v -> style { it.copy(lineSpacing = v) } }
         ToggleRow(Icons.Rounded.FormatItalic, tr("Kursywa"), null, st.italic) { v -> style { it.copy(italic = v) } }
@@ -271,6 +273,8 @@ fun ColumnScope.AppearanceSettings(c: LyricsController) {
 }
 
 private fun weightName(w: Int) = when {
+    w <= 100 -> tr("włosowa")
+    w <= 200 -> tr("bardzo cienka")
     w <= 300 -> tr("cienka")
     w <= 400 -> tr("zwykła")
     w <= 500 -> tr("średnia")

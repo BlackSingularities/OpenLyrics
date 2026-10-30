@@ -156,7 +156,7 @@ private fun lineStyle(style: OverlayStyle, size: Float, color: Color, glow: Colo
     color = color,
     fontSize = size.sp,
     lineHeight = (size * 1.22f).sp,
-    fontFamily = style.font.family(),
+    fontFamily = style.customFont.takeIf { it.isNotBlank() }?.let { SystemFonts.current?.family(it) } ?: style.font.family(),
     fontWeight = FontWeight(weight.coerceIn(100, 900)),
     fontStyle = if (style.italic) FontStyle.Italic else FontStyle.Normal,
     letterSpacing = style.letterSpacing.em,

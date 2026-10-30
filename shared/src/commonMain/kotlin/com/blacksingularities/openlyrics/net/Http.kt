@@ -13,13 +13,13 @@ object Http {
     fun enc(s: String): String = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     /** GET – tekst odpowiedzi albo null dla 404. */
-    fun get(url: String, accept: String = "application/json", timeoutMs: Int = 12_000): String? {
+    fun get(url: String, accept: String = "application/json", timeoutMs: Int = 12_000, ua: String = userAgent): String? {
         val conn = (URL(url).openConnection() as HttpURLConnection).apply {
             connectTimeout = timeoutMs
             readTimeout = timeoutMs + 3_000
             instanceFollowRedirects = true
             setRequestProperty("Accept", accept)
-            setRequestProperty("User-Agent", userAgent)
+            setRequestProperty("User-Agent", ua)
         }
         try {
             val code = conn.responseCode

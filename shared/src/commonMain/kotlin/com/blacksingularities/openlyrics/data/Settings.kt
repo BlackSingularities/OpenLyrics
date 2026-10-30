@@ -39,6 +39,8 @@ data class OverlayStyle(
     /** Rozmiar pozostałych wierszy względem aktywnego. */
     val inactiveSize: Float = 0.82f,
     val font: FontChoice = FontChoice.SANS,
+    /** Czcionka zainstalowana w systemie (Windows); pusta – używany jest [font]. */
+    val customFont: String = "",
     /** Grubość pisma 300–900. */
     val weight: Int = 800,
     val italic: Boolean = false,
@@ -134,6 +136,8 @@ data class AppSettings(
     val hideWhenPaused: Boolean = false,
     val hideWhenNoLyrics: Boolean = true,
     val searchOnline: Boolean = true,
+    /** Gdy LRCLIB nie ma tekstu z czasami – NetEase, a na końcu lyrics.ovh. */
+    val extraSources: Boolean = true,
     /** Gdy w pliku jest tylko tekst bez czasów – poszukaj wersji z czasami w sieci. */
     val preferSynced: Boolean = true,
     /** Zapisuj tekst znaleziony w sieci jako plik .lrc obok utworu. */

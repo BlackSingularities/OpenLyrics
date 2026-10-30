@@ -274,6 +274,8 @@ private fun SourceLine(c: LyricsController) {
                 LyricsSource.CACHE -> tr("Zapisany wcześniej")
                 LyricsSource.LRCLIB -> tr("Znaleziony w LRCLIB")
                 LyricsSource.MANUAL -> tr("Wybrany ręcznie")
+                LyricsSource.NETEASE -> tr("Znaleziony w NetEase")
+                LyricsSource.LYRICS_OVH -> tr("Znaleziony w lyrics.ovh")
             }
             Palette.Ok to "$src · $kind · " + tr("{0} wierszy", l.lines.size)
         }
@@ -384,7 +386,7 @@ private fun SearchCard(c: LyricsController) {
     }
     when (val s = c.search) {
         SearchState.Idle -> Text(
-            tr("Wyniki z otwartej bazy LRCLIB. Wybrany tekst zostanie zapamiętany dla odtwarzanego utworu."),
+            tr("Wyniki z LRCLIB i NetEase. Wybrany tekst zostanie zapamiętany dla odtwarzanego utworu."),
             fontSize = 12.sp,
             color = Palette.TextFaint,
             modifier = Modifier.padding(6.dp),
@@ -416,7 +418,7 @@ private fun SearchCard(c: LyricsController) {
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(item.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
-                            listOf(item.artist, item.album).filter { it.isNotBlank() }.joinToString(" · "),
+                            listOf(item.artist, item.album, if (item.source == LyricsSource.NETEASE) "NetEase" else "LRCLIB").filter { it.isNotBlank() }.joinToString(" · "),
                             fontSize = 12.sp,
                             color = Palette.TextDim,
                             maxLines = 1,

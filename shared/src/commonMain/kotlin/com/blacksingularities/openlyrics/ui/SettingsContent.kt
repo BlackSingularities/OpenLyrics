@@ -89,6 +89,7 @@ fun ColumnScope.SettingsContent(c: LyricsController) {
     Group {
         ToggleRow(Icons.Rounded.Cloud, tr("Szukaj w sieci"), tr("Gdy plik nie ma tekstu – LRCLIB, otwarta baza tekstów z czasami"), s.searchOnline) { v -> c.updateSettings { it.copy(searchOnline = v) } }
         ToggleRow(Icons.Rounded.Timer, tr("Wolę tekst z czasami"), tr("Gdy w pliku jest tekst bez czasów, poszukaj wersji z czasami"), s.preferSynced, enabled = s.searchOnline) { v -> c.updateSettings { it.copy(preferSynced = v) } }
+        ToggleRow(Icons.Rounded.Cloud, tr("Szukaj też w innych bazach"), tr("Gdy LRCLIB nie ma tekstu z czasami – NetEase Cloud Music, a na końcu lyrics.ovh (tekst bez czasów)"), s.extraSources, enabled = s.searchOnline) { v -> c.updateSettings { it.copy(extraSources = v) } }
         ToggleRow(Icons.Rounded.Save, tr("Zapisuj pliki .lrc"), tr("Tekst znaleziony w sieci zapisz obok utworu – następnym razem także inne odtwarzacze go zobaczą"), s.saveSidecar) { v -> c.updateSettings { it.copy(saveSidecar = v) } }
         ToggleRow(Icons.Rounded.Save, tr("Zapisuj tekst w plikach muzycznych"), tr("Tekst z czasami znaleziony w sieci trafia do środka pliku MP3 (ID3) albo FLAC (komentarz LYRICS) – pozostałe tagi i okładka zostają bez zmian"), s.saveEmbedded) { v -> c.updateSettings { it.copy(saveEmbedded = v) } }
         SliderRow(Icons.Rounded.Timer, tr("Przesunięcie wszystkich tekstów"), s.globalOffsetMs / 1000f, -3f..3f, { LyricsController.formatOffset((it * 1000).toLong()) + " s" }, steps = 23) { v ->

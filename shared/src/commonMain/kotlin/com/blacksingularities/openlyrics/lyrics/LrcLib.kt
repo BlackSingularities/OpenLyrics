@@ -12,7 +12,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.longOrNull
 import kotlin.math.abs
 
-/** Wynik wyszukiwania w LRCLIB (otwarta, darmowa baza tekstów z czasami). */
+/** Tekst znaleziony w sieci – w LRCLIB (otwarta baza tekstów z czasami) albo w źródle zapasowym. */
 data class LyricsCandidate(
     val id: Long,
     val title: String,
@@ -22,13 +22,14 @@ data class LyricsCandidate(
     val synced: String?,
     val plain: String?,
     val instrumental: Boolean,
+    val source: LyricsSource = LyricsSource.LRCLIB,
 ) {
     val hasSynced: Boolean get() = !synced.isNullOrBlank()
 
     fun toLyrics(): Lyrics = when {
-        instrumental -> Lyrics(emptyList(), synced = false, source = LyricsSource.LRCLIB, instrumental = true)
-        hasSynced -> Lrc.parse(synced!!, LyricsSource.LRCLIB)
-        else -> Lrc.plain(plain.orEmpty(), LyricsSource.LRCLIB)
+        instrumental -> Lyrics(emptyList(), synced = false, source = source, instrumental = true)
+        hasSynced -> Lrc.parse(synced!!, source)
+        else -> Lrc.plain(plain.orEmpty(), source)
     }
 }
 
