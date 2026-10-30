@@ -75,7 +75,9 @@ class AndroidPlatform(private val context: Context) : Platform {
      * Plik utworu: adres z metadanych odtwarzacza (content:// albo file://), a w pozostałych
      * przypadkach wyszukiwanie w MediaStore po tytule, wykonawcy i długości.
      */
-    override fun locate(track: NowPlaying): LocatedTrack? {
+    override fun locate(track: NowPlaying): LocatedTrack? = runCatching { locateOrThrow(track) }.getOrNull()
+
+    private fun locateOrThrow(track: NowPlaying): LocatedTrack? {
         val hint = track.fileHint
         if (hint != null) {
             val uri = runCatching { Uri.parse(hint) }.getOrNull()

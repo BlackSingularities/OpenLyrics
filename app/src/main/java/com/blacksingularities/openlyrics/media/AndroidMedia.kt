@@ -64,17 +64,19 @@ class AndroidMedia(private val context: Context) : MediaSource {
         }
     }
 
-    private fun onSessions(list: List<MediaController>) {
+    private fun onSessions(list: List<MediaController>) = runCatching { updateSessions(list) }.let { Unit }
+
+    private fun updateSessions(list: List<MediaController>) {
         val tokens = list.map { it.sessionToken }.toSet()
         callbacks.keys.filter { it.sessionToken !in tokens }.forEach { c ->
-            runCatching { c.unregisterCallback(callbacks.remove(c)!!) }
+            callbacks.remove(c)?.let { cb -> runCatching { c.unregisterCallback(cb) } }
         }
         for (c in list) {
             if (callbacks.keys.any { it.sessionToken == c.sessionToken }) continue
             val cb = object : MediaController.Callback() {
-                override fun onPlaybackStateChanged(state: PlaybackState?) = publish()
-                override fun onMetadataChanged(metadata: MediaMetadata?) = publish()
-                override fun onSessionDestroyed() = publish()
+                override fun onPlaybackStateChanged(state: PlaybackState?) = safePublish()
+                override fun onMetadataChanged(metadata: MediaMetadata?) = safePublish()
+                override fun onSessionDestroyed() = safePublish()
             }
             runCatching { c.registerCallback(cb, main) }
             callbacks[c] = cb
@@ -83,12 +85,17 @@ class AndroidMedia(private val context: Context) : MediaSource {
         publish()
     }
 
+    private fun safePublish() {
+        runCatching { publish() }
+    }
+
     /** Wybór sesji: grająca; jeśli żadna – ta, która grała ostatnio. */
     private fun publish() {
-        val playing = controllers.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+        val playing = controllers.firstOrNull { runCatching { it.playbackState?.state }.getOrNull() == PlaybackState.STATE_PLAYING }
         val pick = playing ?: active?.takeIf { it in controllers } ?: controllers.firstOrNull()
         active = pick
-        _now.value = pick?.let(::toNowPlaying)
+        // Odtwarzacze podają metadane różnej jakości – błąd jednego nie może zamknąć aplikacji.
+        _now.value = pick?.let { runCatching { toNowPlaying(it) }.getOrNull() }
     }
 
     private fun toNowPlaying(c: MediaController): NowPlaying? {
@@ -117,7 +124,10 @@ class AndroidMedia(private val context: Context) : MediaSource {
             capturedAt = nowWall - (nowElapsed - last),
             playing = st?.state == PlaybackState.STATE_PLAYING,
             rate = st?.playbackSpeed?.takeIf { it > 0f } ?: 1f,
-            fileHint = md.getString(MediaMetadata.METADATA_KEY_MEDIA_URI) ?: md.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
+            fileHint = listOf(MediaMetadata.METADATA_KEY_MEDIA_URI, MediaMetadata.METADATA_KEY_MEDIA_ID)
+                .mapNotNull { k -> md.getString(k) }
+                .firstOrNull { it.startsWith("content://") || it.startsWith("file://") || it.startsWith("/") }
+                ?.let { if (it.startsWith("/")) "file://$it" else it },
         ).tidy()
     }
 

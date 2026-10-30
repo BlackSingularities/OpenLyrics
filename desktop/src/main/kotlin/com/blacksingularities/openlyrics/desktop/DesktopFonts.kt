@@ -1,5 +1,6 @@
 package com.blacksingularities.openlyrics.desktop
 
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -9,6 +10,7 @@ import java.awt.GraphicsEnvironment
 import java.util.concurrent.ConcurrentHashMap
 
 /** Czcionki zainstalowane w Windows (także te zainstalowane tylko dla użytkownika). */
+@OptIn(ExperimentalTextApi::class)
 object DesktopFonts : SystemFonts {
     /** Logiczne nazwy Javy – nie są prawdziwymi czcionkami. */
     private val logical = setOf("Dialog", "DialogInput", "Monospaced", "SansSerif", "Serif")

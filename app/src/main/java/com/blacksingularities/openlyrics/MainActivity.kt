@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         UpdateManager.clearUpdatedNotification(this)
         if (Build.VERSION.SDK_INT >= 33) notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         setContent { MainScreen(app.controller) }
+        CrashLog.showIfAny(this)
     }
 
     override fun onResume() {

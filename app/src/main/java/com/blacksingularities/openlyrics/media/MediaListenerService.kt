@@ -7,6 +7,9 @@ import android.os.Build
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.view.Gravity
+import android.view.MotionEvent
+import android.widget.FrameLayout
+import android.graphics.Canvas
 import android.view.WindowManager
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
@@ -26,9 +29,11 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.blacksingularities.openlyrics.CrashLog
 import com.blacksingularities.openlyrics.OpenLyricsApp
 import com.blacksingularities.openlyrics.data.OverlayBounds
 import com.blacksingularities.openlyrics.ui.LyricsOverlay
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -59,11 +64,17 @@ class MediaListenerService : NotificationListenerService() {
                 .distinctUntilChanged()
                 .collect { (enabled, locked, playing) ->
                     val can = Settings.canDrawOverlays(this@MediaListenerService)
-                    if (enabled && playing && can) {
-                        val o = overlay ?: OverlayWindow(this@MediaListenerService).also { overlay = it }
-                        o.show(locked)
-                    } else {
-                        overlay?.hide()
+                    runCatching {
+                        if (enabled && playing && can) {
+                            val o = overlay ?: OverlayWindow(this@MediaListenerService).also { overlay = it }
+                            o.show(locked)
+                        } else {
+                            overlay?.hide()
+                        }
+                    }.onFailure { e ->
+                        CrashLog.record(this@MediaListenerService, e, "nakładka – otwieranie")
+                        runCatching { overlay?.hide() }
+                        overlay = null
                     }
                 }
         }
@@ -96,7 +107,7 @@ private class OverlayWindow(private val context: Context) : LifecycleOwner, Save
     override val savedStateRegistry: SavedStateRegistry get() = savedState.savedStateRegistry
 
     private val wm = context.getSystemService(WindowManager::class.java)
-    private var view: ComposeView? = null
+    private var view: SafeFrame? = null
     private var params: WindowManager.LayoutParams? = null
     private var locked = false
     private var recomposer: Recomposer? = null
@@ -135,14 +146,19 @@ private class OverlayWindow(private val context: Context) : LifecycleOwner, Save
             runCatching { wm.updateViewLayout(existing, p) }
             return
         }
-        val v = ComposeView(context).apply {
-            setViewTreeLifecycleOwner(this@OverlayWindow)
-            setViewTreeSavedStateRegistryOwner(this@OverlayWindow)
-            val r = Recomposer(AndroidUiDispatcher.CurrentThread)
+        // Błąd w kompozycji, pomiarze albo rysowaniu nakładki wyłącza tylko nakładkę – nie całą aplikację.
+        val failed = CoroutineExceptionHandler { _, e -> fail(e, "nakładka – kompozycja") }
+        val compose = ComposeView(context).apply {
+            val r = Recomposer(AndroidUiDispatcher.CurrentThread + failed)
             recomposer = r
             compositionContext = r
-            CoroutineScope(AndroidUiDispatcher.CurrentThread).launch { r.runRecomposeAndApplyChanges() }
+            CoroutineScope(AndroidUiDispatcher.CurrentThread + failed).launch { r.runRecomposeAndApplyChanges() }
             setContent { Content() }
+        }
+        val v = SafeFrame(context) { e -> fail(e, "nakładka – rysowanie") }.apply {
+            setViewTreeLifecycleOwner(this@OverlayWindow)
+            setViewTreeSavedStateRegistryOwner(this@OverlayWindow)
+            addView(compose)
         }
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
         runCatching { wm.addView(v, p) }.onSuccess { view = v }
@@ -212,6 +228,12 @@ private class OverlayWindow(private val context: Context) : LifecycleOwner, Save
         OpenLyricsApp.instance.controller.updateSettings { it.copy(bounds = OverlayBounds(0, p.y, it.bounds.width, it.bounds.height)) }
     }
 
+    private fun fail(e: Throwable, where: String) {
+        CrashLog.record(context, e, where)
+        // Po awarii kompozycja jest w nieznanym stanie – zamykamy okno; przy kolejnej zmianie utworu powstanie nowe.
+        android.os.Handler(android.os.Looper.getMainLooper()).post { hide() }
+    }
+
     fun hide() {
         val v = view ?: return
         runCatching { wm.removeView(v) }
@@ -219,5 +241,42 @@ private class OverlayWindow(private val context: Context) : LifecycleOwner, Save
         recomposer?.cancel()
         recomposer = null
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
+    }
+}
+
+/** Kontener nakładki przechwytujący wyjątki z pomiaru, układu, rysowania i dotyku. */
+private class SafeFrame(context: Context, private val onError: (Throwable) -> Unit) : FrameLayout(context) {
+    private var broken = false
+
+    private inline fun guard(block: () -> Unit) {
+        if (broken) return
+        try {
+            block()
+        } catch (e: Throwable) {
+            broken = true
+            onError(e)
+        }
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        try {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        } catch (e: Throwable) {
+            setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec))
+            if (!broken) {
+                broken = true
+                onError(e)
+            }
+        }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) = guard { super.onLayout(changed, left, top, right, bottom) }
+
+    override fun dispatchDraw(canvas: Canvas) = guard { super.dispatchDraw(canvas) }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        var handled = false
+        guard { handled = super.dispatchTouchEvent(ev) }
+        return handled
     }
 }

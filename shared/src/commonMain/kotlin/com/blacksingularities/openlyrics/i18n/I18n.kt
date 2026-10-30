@@ -111,6 +111,10 @@ internal val En: Map<String, String> = hashMapOf(
     "Szukanie w NetEase…" to "Searching NetEase…",
     "Szukanie w lyrics.ovh…" to "Searching lyrics.ovh…",
     "Brak połączenia z bazami tekstów: {0}" to "Cannot reach lyrics databases: {0}",
+    "OpenLyrics napotkał błąd" to "OpenLyrics ran into an error",
+    "Skopiuj opis błędu i prześlij go autorowi – pomoże to szybko go naprawić." to "Copy the error details and send them to the author – it helps fix it quickly.",
+    "Kopiuj" to "Copy",
+    "Skopiowano" to "Copied",
     "{0} – ponowna próba za {1} s" to "{0} – retrying in {1} s",
     // nakładka
     "Utwór instrumentalny" to "Instrumental",
