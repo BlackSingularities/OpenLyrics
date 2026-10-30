@@ -1,3 +1,9 @@
+## 1.2.2
+
+- Android: tekst nakładki jest wreszcie pełny i wyraźny. Okno nakładki rysowane jest sprzętowo, więc wygaszanie krawędzi, cienie i obrys liter nie zamieniają już tekstu w ledwo widoczny, przezroczysty zarys pod interfejsem odtwarzacza.
+- Android: rozmiar nakładki zmienia się uchwytem w prawym dolnym rogu, a przeciąganie przesuwa ją też w poziomie. Położenie i rozmiar są zapamiętywane osobno od okna na komputerze; przycisk „Dopasuj automatycznie” w ustawieniach wraca do pełnej szerokości i wysokości z liczby widocznych wierszy.
+- Android: do wyboru są wszystkie czcionki zainstalowane w telefonie – lista z wyszukiwaniem i podglądem, tak jak w wersji na Windows (wcześniej tylko cztery kroje wbudowane).
+
 ## 1.2.1
 
 - Android: nakładka z tekstem nie wywraca już aplikacji przy starcie odtwarzania (StackOverflowError w rysowaniu nakładki).
