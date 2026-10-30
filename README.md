@@ -1,5 +1,7 @@
 # OpenLyrics
 
+<img src="artwork/app-icon.png" alt="OpenLyrics" width="128" />
+
 **Tekst odtwarzanej piosenki nad wszystkimi oknami – na Windows i Androida.** Przezroczysta nakładka bez ramki, w której wiersze przesuwają się od dołu do góry zgodnie ze znacznikami czasu. Tekst pochodzi z samego pliku muzycznego, a gdy go tam nie ma – z otwartej bazy LRCLIB.
 
 [![Build & Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)

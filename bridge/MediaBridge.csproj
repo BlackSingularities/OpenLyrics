@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>OpenLyricsMedia</AssemblyName>
+    <ApplicationIcon>../desktop/icons/OpenLyrics.ico</ApplicationIcon>
     <RootNamespace>OpenLyrics.Media</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
