@@ -1,3 +1,10 @@
+## 1.2.0
+
+- Windows: instalacja w Program Files z uprawnieniami administratora; aktualizacja z aplikacji prosi o zgodę (UAC), instaluje się w tym samym folderze i nie zostawia drugiej kopii. Stara kopia z folderu użytkownika jest usuwana automatycznie.
+- Windows: dowolna czcionka zainstalowana w systemie – lista z wyszukiwaniem i podglądem; pełna skala grubości 100–900.
+- Gdy LRCLIB nie ma tekstu z czasami, aplikacja szuka też w NetEase Cloud Music, a na końcu w lyrics.ovh. Ręczne wyszukiwanie pokazuje wyniki z obu baz.
+- Android: nakładka i obsługa odtwarzaczy (m.in. OpenAmp) odporne na błędy – problem wyłącza najwyżej nakładkę, a nie całą aplikację. Opis ewentualnego błędu można skopiować przy kolejnym uruchomieniu.
+
 ## 1.1.1
 
 - Po chwilowej awarii LRCLIB (np. kod 503) aplikacja sama ponawia wyszukiwanie tekstu – zamiast zostawiać komunikat o błędzie do zmiany utworu.
