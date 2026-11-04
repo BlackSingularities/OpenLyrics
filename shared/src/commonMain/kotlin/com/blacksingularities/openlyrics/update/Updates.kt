@@ -16,7 +16,7 @@ const val UPDATE_REPO = "BlackSingularities/OpenLyrics"
  * Wydania i pliki pobierane są z redzikowski.com (zamiennik GitHub API dla aplikacji z portfolio),
  * tak jak w pozostałych aplikacjach – repozytorium jest prywatne, a serwer dokłada token.
  */
-const val UPDATE_API = "https://redzikowski.com/api/github/repos/$UPDATE_REPO/releases/latest"
+const val UPDATE_API = "https://redzikowski.com/api/releases/repos/$UPDATE_REPO/releases/latest"
 const val UPDATE_HOST = "https://redzikowski.com/"
 const val PROJECT_PAGE = "https://redzikowski.com/portfolio/openlyrics"
 

@@ -393,7 +393,7 @@ class LyricsController(val platform: Platform) {
         update = UpdateState.Checking
         scope.launch(Dispatchers.IO) {
             update = try {
-                val body = Http.get(UPDATE_API, "application/vnd.github+json") ?: error(tr("Brak wydań"))
+                val body = Http.get(UPDATE_API, "application/json") ?: error(tr("Brak wydań"))
                 val info = parseRelease(body, platform.updateAssetSuffix)
                 if (isNewer(info.version, platform.appVersion)) UpdateState.Available(info) else UpdateState.UpToDate
             } catch (e: Throwable) {
