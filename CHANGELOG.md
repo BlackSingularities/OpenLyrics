@@ -1,3 +1,7 @@
+## 1.2.3
+
+- Komunikat o nowej wersji bez listy zmian, linków i informacji, skąd pobierana jest aktualizacja.
+
 ## 1.2.2
 
 - Android: tekst nakładki jest wreszcie pełny i wyraźny. Okno nakładki rysowane jest sprzętowo, więc wygaszanie krawędzi, cienie i obrys liter nie zamieniają już tekstu w ledwo widoczny, przezroczysty zarys pod interfejsem odtwarzacza.

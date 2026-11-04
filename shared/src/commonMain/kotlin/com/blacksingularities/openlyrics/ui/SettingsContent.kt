@@ -154,10 +154,6 @@ private fun UpdateRow(c: LyricsController) {
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             )
         }
-        val notes = (update as? UpdateState.Available)?.info?.notes ?: (update as? UpdateState.Ready)?.info?.notes
-        if (!notes.isNullOrBlank()) {
-            Text(notes, fontSize = 12.sp, lineHeight = 17.sp, color = Palette.TextDim, modifier = Modifier.padding(top = 8.dp, start = 44.dp))
-        }
         Text(
             tr("Aktualizacje pobierane są bezpośrednio z redzikowski.com"),
             fontSize = 11.sp,
