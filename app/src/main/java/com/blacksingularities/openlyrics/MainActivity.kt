@@ -29,7 +29,9 @@ class MainActivity : ComponentActivity() {
         UpdateManager.clearUpdatedNotification(this)
         if (Build.VERSION.SDK_INT >= 33) notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         setContent { MainScreen(app.controller) }
-        CrashLog.showIfAny(this)
+        // Po awarii pyta CrashReportPrompt (wysyłka raportu); stary podgląd zostaje dla błędów przechwyconych.
+        if (com.blacksingularities.openlyrics.feedback.LyricsFeedback.pendingCrash(app.platform) != null) CrashLog.clear(this)
+        else CrashLog.showIfAny(this)
     }
 
     override fun onResume() {

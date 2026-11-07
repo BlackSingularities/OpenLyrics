@@ -43,6 +43,10 @@ import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -189,6 +193,17 @@ private fun About(c: LyricsController) {
                 .clickable { runCatching { c.platform.openUri("mailto:kontakt@redzikowski.com") } }
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         )
+        var feedback by remember { mutableStateOf(false) }
+        Text(
+            tr("Zgłoś błąd lub sugestię"),
+            fontSize = 12.sp,
+            color = Palette.TextDim,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { feedback = true }
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+        if (feedback) com.blacksingularities.openlyrics.feedback.FeedbackDialog(c.platform) { feedback = false }
         Text(
             "☕  " + tr("Postaw kawę"),
             fontSize = 13.sp,

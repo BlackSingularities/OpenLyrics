@@ -49,6 +49,10 @@ object CrashLog {
         }
     }
 
+    fun clear(context: Context) {
+        runCatching { file(context).delete() }
+    }
+
     fun showIfAny(activity: Activity) {
         val f = file(activity)
         val text = runCatching { f.takeIf { it.isFile }?.readText() }.getOrNull() ?: return

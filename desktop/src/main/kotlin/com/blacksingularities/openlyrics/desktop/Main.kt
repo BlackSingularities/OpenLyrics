@@ -64,6 +64,7 @@ fun main(args: Array<String>) {
 
     com.blacksingularities.openlyrics.ui.SystemFonts.current = DesktopFonts
     val platform = DesktopPlatform()
+    com.blacksingularities.openlyrics.feedback.LyricsFeedback.install(platform)
     val controller = LyricsController(platform)
     platform.controller = controller
     platform.pickFolder = {

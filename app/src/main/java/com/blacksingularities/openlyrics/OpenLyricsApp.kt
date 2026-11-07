@@ -16,6 +16,7 @@ class OpenLyricsApp : Application() {
         CrashLog.install(this)
         com.blacksingularities.openlyrics.ui.SystemFonts.current = AndroidFonts
         platform = AndroidPlatform(this)
+        com.blacksingularities.openlyrics.feedback.LyricsFeedback.install(platform)
         controller = LyricsController(platform)
     }
 
