@@ -11,12 +11,56 @@
       "title": "Śpiewaj *w rytm muzyki*",
       "lead": "Włączasz muzykę w dowolnym odtwarzaczu, a nad oknami pojawia się jej tekst – wiersz po wierszu, dokładnie w rytm.",
       "shots": [
-        { "src": "../screenshots/android/01-nakladka.png", "caption": "Nakładka" },
-        { "src": "../screenshots/android/02-teraz.png", "caption": "Teraz gra" },
-        { "src": "../screenshots/android/03-wyglad.png", "caption": "Wygląd" }
+        {
+          "src": "../screenshots/android/01-nakladka.png",
+          "caption": "Nakładka"
+        },
+        {
+          "src": "../screenshots/android/02-teraz.png",
+          "caption": "Teraz gra"
+        },
+        {
+          "src": "../screenshots/android/03-wyglad.png",
+          "caption": "Wygląd"
+        }
       ],
-      "features": ["każdy odtwarzacz", "tekst z pliku MP3, FLAC, OGG", "LRCLIB, gdy brak tekstu", "karaoke słowo po słowie", "7 gotowych stylów"],
+      "features": [
+        "każdy odtwarzacz",
+        "tekst z pliku MP3, FLAC, OGG",
+        "LRCLIB, gdy brak tekstu",
+        "karaoke słowo po słowie",
+        "7 gotowych stylów"
+      ],
       "meta": "Android 10 lub nowszy"
+    },
+    {
+      "platform": "windows",
+      "file": "windows.png",
+      "title": "Tekst piosenki *nad oknami*",
+      "lead": "Włączasz muzykę w dowolnym odtwarzaczu, a przezroczysta nakładka pokazuje tekst wiersz po wierszu, dokładnie w rytm.",
+      "shots": [
+        {
+          "src": "../screenshots/windows/02-nakladka.png",
+          "caption": "Nakładka nad wszystkimi oknami"
+        },
+        {
+          "src": "../screenshots/windows/01-teraz.png",
+          "caption": "Teraz odtwarzane i podgląd"
+        },
+        {
+          "src": "../screenshots/windows/03-przesuniecie.png",
+          "caption": "Przesunięcie czasu dla utworu"
+        }
+      ],
+      "features": [
+        "każdy odtwarzacz w systemie",
+        "tekst z pliku albo .lrc",
+        "LRCLIB, gdy brak tekstu",
+        "płynne przewijanie i karaoke",
+        "własne kolory i czcionki",
+        "zasobnik i autostart"
+      ],
+      "meta": "Windows 10 i 11"
     }
   ]
 }
