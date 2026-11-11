@@ -1,5 +1,13 @@
 # OpenLyrics
 
+<!-- posters:start -->
+<p align="center">
+  <img src="docs/posters/android.png" alt="OpenLyrics – Android" width="460">
+</p>
+
+<p align="center"><a href="https://redzikowski.com/portfolio/openlyrics">redzikowski.com/portfolio/openlyrics</a></p>
+<!-- posters:end -->
+
 <img src="artwork/app-icon.png" alt="OpenLyrics" width="128" />
 
 **Tekst odtwarzanej piosenki nad wszystkimi oknami – na Windows i Androida.** Przezroczysta nakładka bez ramki, w której wiersze przesuwają się od dołu do góry zgodnie ze znacznikami czasu. Tekst pochodzi z samego pliku muzycznego, a gdy go tam nie ma – z otwartej bazy LRCLIB.

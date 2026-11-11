@@ -1,0 +1,22 @@
+{
+  "slug": "openlyrics",
+  "name": "OpenLyrics",
+  "label": "tekst piosenki nad każdym odtwarzaczem",
+  "icon": "icon.png",
+  "url": "https://redzikowski.com/portfolio/openlyrics",
+  "posters": [
+    {
+      "platform": "android",
+      "file": "android.png",
+      "title": "Śpiewaj *w rytm muzyki*",
+      "lead": "Włączasz muzykę w dowolnym odtwarzaczu, a nad oknami pojawia się jej tekst – wiersz po wierszu, dokładnie w rytm.",
+      "shots": [
+        { "src": "../screenshots/android/01-nakladka.png", "caption": "Nakładka" },
+        { "src": "../screenshots/android/02-teraz.png", "caption": "Teraz gra" },
+        { "src": "../screenshots/android/03-wyglad.png", "caption": "Wygląd" }
+      ],
+      "features": ["każdy odtwarzacz", "tekst z pliku MP3, FLAC, OGG", "LRCLIB, gdy brak tekstu", "karaoke słowo po słowie", "7 gotowych stylów"],
+      "meta": "Android 10 lub nowszy"
+    }
+  ]
+}
